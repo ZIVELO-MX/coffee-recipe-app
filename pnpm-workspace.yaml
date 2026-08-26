@@ -1,0 +1,7 @@
+minimumReleaseAge: 0
+
+allowBuilds:
+  '@clerk/shared': true
+  esbuild: true
+  msw: false
+  unrs-resolver: true
