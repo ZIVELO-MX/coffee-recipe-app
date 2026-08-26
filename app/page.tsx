@@ -1,5 +1,6 @@
 "use client"
 
+import { useClerk, useUser } from "@clerk/nextjs"
 import { useState } from "react"
 import { BottomNav, type Tab } from "@/components/wireframe/bottom-nav"
 import { ScreenBuscar } from "@/components/wireframe/screen-buscar"
@@ -7,16 +8,19 @@ import { ScreenGuardados } from "@/components/wireframe/screen-guardados"
 import { ScreenPerfil } from "@/components/wireframe/screen-perfil"
 import { RecipeSheet } from "@/components/wireframe/recipe-sheet"
 import { GrinderSelector } from "@/components/wireframe/grinder-selector"
-import { AuthFlow, type AuthUser } from "@/components/auth/auth-flow"
+import type { AuthUser } from "@/components/auth/auth-flow"
 import { DEFAULT_GRINDER, RECIPES } from "@/lib/mock-data"
 
 export default function Page({ initialTab = "buscar" }: { initialTab?: Tab }) {
-  const [user, setUser] = useState<AuthUser | null>({
-    name: "Invitado",
-    email: "",
-    avatarId: "espresso",
-    guest: true,
-  })
+  const { isLoaded, user: clerkUser } = useUser()
+  const { signOut } = useClerk()
+  const user: AuthUser = clerkUser
+    ? {
+        name: clerkUser.fullName ?? clerkUser.firstName ?? "Cafetero",
+        email: clerkUser.primaryEmailAddress?.emailAddress ?? "",
+        avatarId: "espresso",
+      }
+    : { name: "Invitado", email: "", avatarId: "espresso", guest: true }
   const [tab, setTab] = useState<Tab>(initialTab)
   const [openRecipeId, setOpenRecipeId] = useState<string | null>(null)
   const [grinderOpen, setGrinderOpen] = useState(false)
@@ -33,21 +37,20 @@ export default function Page({ initialTab = "buscar" }: { initialTab?: Tab }) {
   }
 
   function handleLogout() {
-    setUser(null)
+    void signOut()
     setTab("buscar")
     setOpenRecipeId(null)
+  }
+
+  if (!isLoaded) {
+    return <main className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">Cargando…</main>
   }
 
   return (
     <main className="flex min-h-screen justify-center bg-background">
       {/* Contenedor tipo teléfono */}
       <div className="relative flex h-[100dvh] w-full max-w-[400px] flex-col overflow-hidden bg-background sm:my-4 sm:h-[calc(100dvh-2rem)] sm:rounded-[2.5rem] sm:border sm:border-border sm:shadow-2xl">
-        {!user ? (
-          <div className="flex-1 overflow-y-auto">
-            <AuthFlow onAuthenticated={setUser} />
-          </div>
-        ) : (
-          <>
+        <>
         {/* Pantalla de origen: permanece montada detrás del sheet */}
         <div className="flex-1 overflow-y-auto">
           {tab === "buscar" ? (
@@ -100,8 +103,7 @@ export default function Page({ initialTab = "buscar" }: { initialTab?: Tab }) {
             onClose={() => setGrinderOpen(false)}
           />
         )}
-          </>
-        )}
+        </>
       </div>
     </main>
   )
