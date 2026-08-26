@@ -25,5 +25,10 @@ describe("recipe timeline", () => {
       { instruction: "x", start: 30, end: 40 },
       { instruction: "y", start: 10, end: 20 },
     ])).toThrow()
+    expect(validateTimeline(steps)).toEqual(steps)
+    expect(() => validateTimeline([
+      { instruction: "x", start: 10, end: 10 },
+      { instruction: "y", start: 20, end: 30 },
+    ])).toThrow()
   })
 })
