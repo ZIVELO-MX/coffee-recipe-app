@@ -21,3 +21,9 @@ export async function getDatabase(): Promise<Db> {
   await client.connect()
   return client.db(dbName)
 }
+
+export async function closeDatabase(): Promise<void> {
+  if (!globalThis.coffeeMongoClient) return
+  await globalThis.coffeeMongoClient.close()
+  globalThis.coffeeMongoClient = undefined
+}

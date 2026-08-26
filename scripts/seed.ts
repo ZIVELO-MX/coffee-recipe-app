@@ -1,4 +1,5 @@
-import { getDatabase } from "@/lib/db"
+import "./load-env"
+import { closeDatabase, getDatabase } from "@/lib/db"
 import { RECIPES } from "@/lib/mock-data"
 import { methodToBrewmark } from "@/lib/domain"
 
@@ -32,7 +33,9 @@ async function main() {
   console.log(`Seeded ${RECIPES.length} recipes`)
 }
 
-main().catch((error) => {
-  console.error("Seed failed", error)
-  process.exitCode = 1
-})
+main()
+  .catch((error) => {
+    console.error("Seed failed", error)
+    process.exitCode = 1
+  })
+  .finally(closeDatabase)

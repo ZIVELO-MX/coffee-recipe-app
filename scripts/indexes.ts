@@ -1,4 +1,5 @@
-import { getDatabase } from "@/lib/db"
+import "./load-env"
+import { closeDatabase, getDatabase } from "@/lib/db"
 
 async function main() {
   const db = await getDatabase()
@@ -10,7 +11,9 @@ async function main() {
   console.log("MongoDB indexes created")
 }
 
-main().catch((error) => {
-  console.error("MongoDB index setup failed", error)
-  process.exitCode = 1
-})
+main()
+  .catch((error) => {
+    console.error("MongoDB index setup failed", error)
+    process.exitCode = 1
+  })
+  .finally(closeDatabase)
