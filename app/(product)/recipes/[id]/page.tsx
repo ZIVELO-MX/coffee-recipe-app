@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server"
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { ProductFrame } from "@/components/wireframe/product-frame"
-import { RecipeExperience } from "@/components/wireframe/recipe-experience"
+import { RecipeModalRoute } from "@/components/wireframe/recipe-modal-route"
 import { getUserPreferences } from "@/lib/preferences"
 import { getRecipeById } from "@/lib/recipes"
 
@@ -15,5 +15,5 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
   const [{ id }, { userId }] = await Promise.all([params, auth()])
   const [recipe, preferences] = await Promise.all([getRecipeById(id, userId), getUserPreferences(userId)])
   if (!recipe) notFound()
-  return <ProductFrame active="buscar"><RecipeExperience recipe={recipe} initialPreferences={preferences} /></ProductFrame>
+  return <><ProductFrame active="buscar"><div className="min-h-full" aria-hidden="true" /></ProductFrame><RecipeModalRoute recipe={recipe} preferences={preferences} direct /></>
 }

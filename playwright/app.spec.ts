@@ -25,6 +25,25 @@ test("search filters are represented in the URL", async ({ page }) => {
   await expect(page.getByRole("link", { name: /V60 clásico balanceado/ })).toBeVisible()
 })
 
+test("the recipe sheet changes to preparation without navigating", async ({ page }) => {
+  if (process.env.CLERK_SECRET_KEY) await setupClerkTestingToken({ page })
+  await page.goto("/recipes")
+  await page.getByRole("link", { name: /Moka mañanera/ }).click()
+  const dialog = page.getByRole("dialog")
+  await dialog.getByRole("button", { name: "Más acciones" }).click()
+  await expect(dialog.getByRole("menu", { name: "Acciones de receta" })).toBeVisible()
+  await dialog.getByRole("button", { name: "Más acciones" }).click()
+  await dialog.getByRole("button", { name: "Iniciar", exact: true }).click()
+  await expect(dialog.getByRole("heading", { name: "Moka mañanera" })).toBeVisible()
+  await expect(dialog.getByRole("button", { name: "Cerrar receta" })).toHaveCount(0)
+  await expect(dialog.getByRole("button", { name: "Pausar" })).toBeVisible()
+  await dialog.getByRole("button", { name: "Pausar" }).click()
+  await expect(dialog.getByRole("button", { name: "Contraer receta" })).toBeVisible()
+  await dialog.getByRole("button", { name: "Contraer receta" }).click()
+  await expect(dialog.getByRole("button", { name: "Cerrar receta" })).toBeVisible()
+  await dialog.getByRole("button", { name: "Cerrar receta" }).click()
+})
+
 test("an authenticated user can persist a saved recipe", async ({ page }) => {
   test.skip(!process.env.CLERK_E2E_USER_EMAIL, "CLERK_E2E_USER_EMAIL is not configured")
   await page.goto("/recipes")

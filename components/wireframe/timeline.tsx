@@ -7,10 +7,12 @@ import { mmss } from "@/lib/format"
 
 export function Timeline({
   recipe,
-  onRunningChange,
+  focused = false,
+  onTimerStatusChange,
 }: {
   recipe: RecipeView
-  onRunningChange?: (running: boolean) => void
+  focused?: boolean
+  onTimerStatusChange: (status: "idle" | "running" | "paused" | "completed") => void
 }) {
   const [elapsed, setElapsed] = useState(0)
   const [running, setRunning] = useState(false)
@@ -26,11 +28,11 @@ export function Timeline({
   const active = recipe.steps[safeActiveIndex]
 
   useEffect(() => {
-    onRunningChange?.(running)
+    onTimerStatusChange(completed ? "completed" : running ? "running" : elapsed > 0 ? "paused" : "idle")
     if (running) {
       activeStepRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
     }
-  }, [onRunningChange, running])
+  }, [completed, elapsed, onTimerStatusChange, running])
 
   useEffect(() => {
     if (!running) return
@@ -80,7 +82,7 @@ export function Timeline({
     <div className="flex flex-col gap-5">
       {/* Cronómetro — elemento signature "liquid glass" con glow cálido */}
       <div
-        className={`glass-strong fixed bottom-6 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-[368px] -translate-x-1/2 flex-col gap-4 rounded-3xl p-5 transition-shadow ${
+        className={`glass-strong fixed bottom-6 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-[368px] -translate-x-1/2 flex-col gap-4 rounded-3xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] transition-shadow ${
           running ? "animate-pulse-glow" : "glow-accent"
         }`}
       >
@@ -125,7 +127,7 @@ export function Timeline({
           const isActive = i === safeActiveIndex && !completed
           const isDone = completed || i < safeActiveIndex
           return (
-            <li ref={isActive ? activeStepRef : undefined} key={i} className="flex gap-3">
+            <li ref={isActive ? activeStepRef : undefined} key={i} className={`flex gap-3 transition-opacity ${focused && !isActive && Math.abs(i - safeActiveIndex) > 1 ? "opacity-45" : ""}`}>
               {/* Riel */}
               <div className="flex flex-col items-center">
                 <span
@@ -149,7 +151,7 @@ export function Timeline({
               {/* Contenido */}
               <button
                 type="button"
-                className={`mb-2.5 flex-1 rounded-2xl border p-4 text-left transition-colors ${
+                className={`${focused && isActive ? "mb-4 min-h-36 p-6" : "mb-2.5 p-4"} flex-1 rounded-2xl border text-left transition-colors ${
                   isActive
                     ? "border-primary/50 bg-primary/10"
                     : "border-border bg-card"
@@ -160,7 +162,7 @@ export function Timeline({
                 </p>
                 <p
                   className={`text-sm leading-relaxed ${
-                    isActive ? "font-semibold text-foreground" : "text-muted-foreground"
+                    isActive ? `${focused ? "text-lg font-bold" : "font-semibold"} text-foreground` : "text-muted-foreground"
                   }`}
                 >
                   {step.instruction}

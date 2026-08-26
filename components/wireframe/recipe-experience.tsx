@@ -11,10 +11,16 @@ const INTENT_KEY = "coffee-recipe-pending-intent"
 const PREFERENCES_KEY = "coffee-recipe-guest-preferences"
 type PendingIntent = { recipeId: string; kind: "saved" | "liked"; value: boolean }
 
-export function RecipeExperience({ recipe, initialPreferences, onRunningChange }: {
+export type RecipeMode = "consult" | "prepare"
+export type TimerStatus = "idle" | "running" | "paused" | "completed"
+
+export function RecipeExperience({ recipe, initialPreferences, mode, timerStatus, onTimerStatusChange, onRequestClose }: {
   recipe: RecipeView
   initialPreferences: UserPreferences
-  onRunningChange?: (running: boolean) => void
+  mode: RecipeMode
+  timerStatus: TimerStatus
+  onTimerStatusChange: (status: TimerStatus) => void
+  onRequestClose: () => void
 }) {
   const { isSignedIn } = useAuth()
   const { openSignIn } = useClerk()
@@ -123,6 +129,8 @@ export function RecipeExperience({ recipe, initialPreferences, onRunningChange }
     <>
       <ScreenRecipe
         recipe={recipe}
+        mode={mode}
+        timerStatus={timerStatus}
         tempUnit={preferences.temperature_unit}
         onToggleUnit={(temperature_unit) => savePreferences({ ...preferences, temperature_unit })}
         onOpenGrinder={() => setGrinderOpen(true)}
@@ -133,7 +141,10 @@ export function RecipeExperience({ recipe, initialPreferences, onRunningChange }
         onToggleLiked={() => request({ recipeId: recipe._id, kind: "liked", value: !optimisticLike.liked })}
         grinderName={preferences.default_grinder_name}
         grindSetting={grindSetting}
-        onRunningChange={onRunningChange}
+        onTimerStatusChange={(status) => {
+          onTimerStatusChange(status)
+        }}
+        onRequestClose={onRequestClose}
       />
       {message && <p role="status" className="fixed inset-x-4 bottom-28 z-50 mx-auto max-w-sm rounded-2xl bg-destructive px-4 py-3 text-center text-sm text-destructive-foreground shadow-xl">{message}</p>}
       {grinderOpen && <GrinderSelector selected={preferences.default_grinder_slug} onSelect={selectGrinder} onClose={() => setGrinderOpen(false)} />}

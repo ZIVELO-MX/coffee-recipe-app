@@ -1,10 +1,12 @@
 "use client"
 
-import { ChevronRight, Heart } from "lucide-react"
+import { Bookmark, Check, ChevronRight, Ellipsis, Heart, X } from "lucide-react"
 import Image from "next/image"
+import { useEffect, useRef, useState } from "react"
 import { METHOD_LABEL, type RecipeView } from "@/lib/domain"
 import { formatTemp, mmss, ratio, totalSeconds } from "@/lib/format"
 import { Timeline } from "./timeline"
+import type { RecipeMode, TimerStatus } from "./recipe-experience"
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
@@ -54,6 +56,8 @@ function SpecRow({
 
 export function ScreenRecipe({
   recipe,
+  mode,
+  timerStatus,
   tempUnit,
   onToggleUnit,
   onOpenGrinder,
@@ -64,9 +68,12 @@ export function ScreenRecipe({
   onToggleLiked,
   grinderName,
   grindSetting,
-  onRunningChange,
+  onTimerStatusChange,
+  onRequestClose,
 }: {
   recipe: RecipeView
+  mode: RecipeMode
+  timerStatus: TimerStatus
   tempUnit: "C" | "F"
   onToggleUnit: (unit: "C" | "F") => void
   onOpenGrinder: () => void
@@ -77,10 +84,60 @@ export function ScreenRecipe({
   onToggleLiked: () => void
   grinderName: string
   grindSetting: string
-  onRunningChange?: (running: boolean) => void
+  onTimerStatusChange: (status: TimerStatus) => void
+  onRequestClose: () => void
 }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const preparationMode = mode === "prepare"
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function handlePointerDown(event: PointerEvent) {
+      if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false)
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setMenuOpen(false)
+        menuButtonRef.current?.focus()
+      }
+    }
+    document.addEventListener("pointerdown", handlePointerDown)
+    document.addEventListener("keydown", handleKeyDown)
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown)
+      document.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [menuOpen])
+
   return (
-    <div className="flex flex-col pb-40">
+    <div className={`flex min-h-full flex-col pb-40 ${preparationMode ? "recipe-preparation" : ""}`}>
+      <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between bg-background/90 px-4 backdrop-blur-xl" aria-label="Acciones de receta">
+        {timerStatus !== "running" ? (
+          <button data-no-drag type="button" onPointerDown={(event) => event.stopPropagation()} onClick={onRequestClose} aria-label={preparationMode ? "Contraer receta" : "Cerrar receta"} className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-secondary">
+            <X className="h-5 w-5" aria-hidden="true" />
+          </button>
+        ) : <span className="h-10 w-10" aria-hidden="true" />}
+        <div ref={menuRef} className="relative ml-auto">
+          <button data-no-drag ref={menuButtonRef} type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => setMenuOpen((open) => !open)} aria-label="Más acciones" aria-haspopup="menu" aria-expanded={menuOpen} className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-secondary">
+            <Ellipsis className="h-5 w-5" aria-hidden="true" />
+          </button>
+          {menuOpen && (
+            <div role="menu" aria-label="Acciones de receta" className="glass-strong absolute right-0 top-12 z-50 flex min-w-52 flex-col gap-1 rounded-2xl p-2 shadow-2xl">
+              <button data-no-drag role="menuitemcheckbox" aria-checked={liked} type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => { onToggleLiked(); setMenuOpen(false) }} className="flex items-center justify-between gap-4 rounded-xl px-3 py-3 text-left text-sm hover:bg-secondary">
+                <span className="inline-flex items-center gap-2"><Heart className={`h-4 w-4 text-primary ${liked ? "fill-primary" : ""}`} aria-hidden="true" />{liked ? "Quitar like" : "Dar like"}</span>
+                {liked && <Check className="h-4 w-4 text-primary" aria-hidden="true" />}
+              </button>
+              <button data-no-drag role="menuitemcheckbox" aria-checked={saved} type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => { onToggleSaved(); setMenuOpen(false) }} className="flex items-center justify-between gap-4 rounded-xl px-3 py-3 text-left text-sm hover:bg-secondary">
+                <span className="inline-flex items-center gap-2"><Bookmark className={`h-4 w-4 text-primary ${saved ? "fill-primary" : ""}`} aria-hidden="true" />{saved ? "Quitar guardado" : "Guardar"}</span>
+                {saved && <Check className="h-4 w-4 text-primary" aria-hidden="true" />}
+              </button>
+            </div>
+          )}
+        </div>
+      </header>
+      {!preparationMode && <>
       {/* Hero con imagen y overlay */}
       <div className="relative h-64 w-full shrink-0 overflow-hidden">
         <Image
@@ -187,34 +244,21 @@ export function ScreenRecipe({
           </ol>
         </section>
 
-        {/* Tiempo (timeline) */}
-        <section className="flex flex-col gap-3">
-          <SectionTitle>Tiempo</SectionTitle>
-          <Timeline recipe={recipe} onRunningChange={onRunningChange} />
-        </section>
-
-        {/* Comunidad */}
-        <section className="flex flex-col gap-3">
-          <SectionTitle>Comunidad</SectionTitle>
-          <div className="flex items-center justify-between rounded-3xl border border-border bg-card p-4">
-            <button type="button" onClick={onToggleLiked} aria-pressed={liked} className="inline-flex items-center gap-2 text-sm text-foreground">
-              <Heart className={`h-5 w-5 text-primary ${liked ? "fill-primary" : ""}`} aria-hidden="true" />
-              A {likeCount} personas les gusta
-            </button>
-            <button
-              type="button"
-              onClick={onToggleSaved}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                saved
-                  ? "bg-secondary text-foreground"
-                  : "bg-primary text-primary-foreground"
-              }`}
-            >
-              {saved ? "Guardada" : "Guardar"}
-            </button>
-          </div>
-        </section>
       </div>
+      </>}
+
+      <section className={`flex flex-col gap-3 ${preparationMode ? "min-h-0 flex-1 px-4 pt-5" : "p-4 pt-0"}`} aria-label={preparationMode ? "Preparar receta" : "Tiempo"}>
+        {preparationMode ? <div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Tiempo</p><h1 className="mt-1 font-serif text-2xl font-extrabold leading-tight text-foreground">{recipe.name}</h1></div> : <SectionTitle>Tiempo</SectionTitle>}
+        <Timeline recipe={recipe} focused={preparationMode} onTimerStatusChange={onTimerStatusChange} />
+      </section>
+
+      {!preparationMode && <section className="flex flex-col gap-3 p-4 pt-0">
+        <SectionTitle>Comunidad</SectionTitle>
+        <div className="flex items-center justify-between rounded-3xl border border-border bg-card p-4">
+          <span className="inline-flex items-center gap-2 text-sm text-foreground"><Heart className={`h-5 w-5 text-primary ${liked ? "fill-primary" : ""}`} aria-hidden="true" /> A {likeCount} personas les gusta</span>
+          <span className="rounded-full bg-secondary px-4 py-2 text-sm font-medium text-foreground">{saved ? "Guardada" : "No guardada"}</span>
+        </div>
+      </section>}
     </div>
   )
 }

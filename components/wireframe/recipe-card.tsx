@@ -18,6 +18,16 @@ export function RecipeCard({
   return (
     <Link
       href={`/recipes/${recipe._id}`}
+      scroll={false}
+      data-recipe-id={recipe._id}
+      onClick={(event) => {
+        const viewport = event.currentTarget.closest<HTMLElement>("[data-product-scroll]")
+        sessionStorage.setItem("coffee-recipe-origin", JSON.stringify({
+          path: `${window.location.pathname}${window.location.search}`,
+          top: viewport?.scrollTop ?? 0,
+          recipeId: recipe._id,
+        }))
+      }}
       style={{ animationDelay: `${index * 90}ms` }}
       className="group animate-rise relative flex w-full flex-col overflow-hidden rounded-3xl border border-border bg-card text-left transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-2xl active:scale-[0.98]"
     >

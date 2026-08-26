@@ -1,31 +1,90 @@
 "use client"
 
-import { X } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import type { RecipeView, UserPreferences } from "@/lib/domain"
-import { RecipeExperience } from "./recipe-experience"
+import { RecipeExperience, type RecipeMode, type TimerStatus } from "./recipe-experience"
 
 export function RecipeSheet({ recipe, preferences, onClose }: { recipe: RecipeView; preferences: UserPreferences; onClose: () => void }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
-  const [running, setRunning] = useState(false)
+  const dragStart = useRef<{ y: number; time: number } | null>(null)
+  const closeTimer = useRef<number | null>(null)
+  const [mode, setMode] = useState<RecipeMode>("consult")
+  const [timerStatus, setTimerStatus] = useState<TimerStatus>("idle")
+  const [dragOffset, setDragOffset] = useState(0)
+  const [dragging, setDragging] = useState(false)
+  const [closing, setClosing] = useState(false)
 
   useEffect(() => {
     const dialog = dialogRef.current
     dialog?.showModal()
-    return () => dialog?.close()
+    return () => {
+      if (closeTimer.current) window.clearTimeout(closeTimer.current)
+      dialog?.close()
+    }
   }, [])
 
+  const requestDismiss = useCallback(() => {
+    if (timerStatus === "running") return
+    if (mode === "prepare") {
+      setMode("consult")
+      setDragOffset(0)
+      return
+    }
+    setClosing(true)
+    dialogRef.current?.close()
+    closeTimer.current = window.setTimeout(onClose, 120)
+  }, [mode, onClose, timerStatus])
+
+  function startDrag(event: React.PointerEvent<HTMLDivElement>) {
+    if (timerStatus === "running" || (event.target instanceof Element && event.target.closest("button, [data-no-drag]"))) return
+    dragStart.current = { y: event.clientY, time: performance.now() }
+    setDragging(true)
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+
+  function moveDrag(event: React.PointerEvent<HTMLDivElement>) {
+    if (!dragStart.current || timerStatus === "running") return
+    setDragOffset(Math.max(0, event.clientY - dragStart.current.y))
+  }
+
+  function endDrag(event: React.PointerEvent<HTMLDivElement>) {
+    const start = dragStart.current
+    if (!start) return
+    dragStart.current = null
+    setDragging(false)
+    const distance = Math.max(0, event.clientY - start.y)
+    const velocity = distance / Math.max(1, performance.now() - start.time)
+    setDragOffset(0)
+    if (distance > 120 || velocity > 0.7) requestDismiss()
+  }
+
   return (
-    <dialog ref={dialogRef} onCancel={(event) => { if (running) event.preventDefault(); else onClose() }} className="m-auto h-[100dvh] w-full max-w-[400px] overflow-hidden border-0 bg-background p-0 text-foreground backdrop:bg-black/70 sm:h-[calc(100dvh-2rem)] sm:rounded-[2.5rem]">
-      <div className="flex h-full flex-col">
-        {!running && (
-          <div className="absolute inset-x-0 top-0 z-20 flex justify-end p-4">
-            <button type="button" onClick={onClose} aria-label="Cerrar receta" className="glass flex h-10 w-10 items-center justify-center rounded-full"><X className="h-5 w-5" aria-hidden="true" /></button>
-          </div>
-        )}
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <RecipeExperience recipe={recipe} initialPreferences={preferences} onRunningChange={setRunning} />
-        </div>
+    <dialog
+      ref={dialogRef}
+      aria-label={`Receta ${recipe.name}`}
+      onCancel={(event) => { event.preventDefault(); requestDismiss() }}
+      onClick={(event) => { if (event.target === event.currentTarget) requestDismiss() }}
+      className={`recipe-dialog m-0 mt-auto h-[96dvh] w-full max-w-[400px] overflow-hidden border-0 bg-background p-0 text-foreground backdrop:bg-black/65 sm:mb-4 sm:h-[calc(100dvh-2rem)] sm:rounded-[2.5rem] ${mode === "prepare" ? "recipe-dialog-prepare" : ""} ${closing ? "recipe-dialog-closing" : ""}`}
+    >
+      <div
+        className="relative flex h-full min-h-0 flex-col"
+        style={{ transform: `translateY(${dragOffset}px)`, transition: dragging ? "none" : "transform 220ms cubic-bezier(0.22, 1, 0.36, 1)" }}
+        onPointerDown={startDrag}
+        onPointerMove={moveDrag}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+      >
+        <RecipeExperience
+          recipe={recipe}
+          initialPreferences={preferences}
+          mode={mode}
+          timerStatus={timerStatus}
+          onTimerStatusChange={(status) => {
+            setTimerStatus(status)
+            if (status === "running") setMode("prepare")
+          }}
+          onRequestClose={requestDismiss}
+        />
       </div>
     </dialog>
   )
