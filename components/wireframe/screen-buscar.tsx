@@ -1,110 +1,105 @@
 "use client"
 
-import { useMemo, useState } from "react"
 import { Search } from "lucide-react"
-import { METHOD_LABEL, RECIPES } from "@/lib/mock-data"
+import { usePathname, useRouter } from "next/navigation"
+import { type FormEvent, useState, useTransition } from "react"
+import type { RecipeFilters, RecipePage } from "@/lib/domain"
 import { RecipeCard } from "./recipe-card"
 import { FilterBar } from "./filter-bar"
-import { FilterSheet } from "./filter-sheet"
-import { totalSeconds } from "@/lib/format"
+import { FILTER_GROUPS, FilterSheet, type FilterGroup } from "./filter-sheet"
 
-export function ScreenBuscar({
-  onOpen,
-  savedIds = [],
-}: {
-  onOpen: (id: string) => void
-  savedIds?: string[]
-}) {
-  const [query, setQuery] = useState("")
-  const [filters, setFilters] = useState<string[]>(["V60", "250–350 ml"])
+const FILTER_KEYS: FilterGroup["key"][] = ["method", "coffee", "water", "temperature", "duration"]
+
+export function ScreenBuscar({ result, filters }: { result: RecipePage; filters: RecipeFilters }) {
+  const pathname = usePathname()
+  const router = useRouter()
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [pending, startTransition] = useTransition()
 
-  function toggleFilter(value: string) {
-    setFilters((prev) => (prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value]))
+  const active = Object.fromEntries(FILTER_KEYS.map((key) => [key, filters[key]])) as Record<FilterGroup["key"], string[]>
+  const labels = new Map(FILTER_GROUPS.flatMap((group) => group.options.map((option) => [`${group.key}:${option.value}`, option.label])))
+  const chips = FILTER_KEYS.flatMap((key) => active[key].map((value) => `${key}:${value}`))
+
+  function navigate(mutator: (params: URLSearchParams) => void) {
+    const params = new URLSearchParams()
+    if (filters.q) params.set("q", filters.q)
+    for (const key of FILTER_KEYS) for (const value of filters[key]) params.append(key, value)
+    if (filters.pageSize !== 20) params.set("pageSize", String(filters.pageSize))
+    mutator(params)
+    params.delete("page")
+    startTransition(() => router.replace(`${pathname}${params.size ? `?${params}` : ""}`, { scroll: false }))
   }
 
-  const results = useMemo(() => {
-    const q = query.toLowerCase()
-    return RECIPES.filter(
-      (r) =>
-        r.name.toLowerCase().includes(q) ||
-        METHOD_LABEL[r.method].toLowerCase().includes(q) ||
-        r.author.toLowerCase().includes(q),
-    ).filter((r) =>
-      filters.every((filter) => {
-        if (filter === "V60") return r.method === "v60"
-        if (filter === "Chemex") return r.method === "chemex"
-        if (filter === "Aeropress") return r.method === "aeropress"
-        if (filter === "Prensa francesa") return r.method === "french-press"
-        if (filter === "Kalita") return false
-        if (filter === "10–15 g") return r.coffee_g >= 10 && r.coffee_g <= 15
-        if (filter === "15–20 g") return r.coffee_g > 15 && r.coffee_g <= 20
-        if (filter === "20–25 g") return r.coffee_g > 20 && r.coffee_g <= 25
-        if (filter === "25 g+") return r.coffee_g > 25
-        if (filter === "150–250 ml") return r.water_ml >= 150 && r.water_ml <= 250
-        if (filter === "250–350 ml") return r.water_ml > 250 && r.water_ml <= 350
-        if (filter === "350–500 ml") return r.water_ml > 350 && r.water_ml <= 500
-        if (filter === "500 ml+") return r.water_ml > 500
-        if (filter === "85–89 °C") return r.temperature_c >= 85 && r.temperature_c <= 89
-        if (filter === "90–93 °C") return r.temperature_c >= 90 && r.temperature_c <= 93
-        if (filter === "94–96 °C") return r.temperature_c >= 94 && r.temperature_c <= 96
-        const seconds = totalSeconds(r)
-        if (filter === "< 2:30") return seconds < 150
-        if (filter === "2:30–3:30") return seconds >= 150 && seconds <= 210
-        if (filter === "3:30–4:30") return seconds > 210 && seconds <= 270
-        if (filter === "> 4:30") return seconds > 270
-        return true
-      }),
-    )
-  }, [filters, query])
+  function submitSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    navigate((params) => {
+      const value = String(new FormData(event.currentTarget).get("q") ?? "").trim()
+      if (value) params.set("q", value)
+      else params.delete("q")
+    })
+  }
+
+  function toggleFilter(key: FilterGroup["key"], value: string) {
+    navigate((params) => {
+      const current = params.getAll(key)
+      params.delete(key)
+      for (const item of current.includes(value) ? current.filter((item) => item !== value) : [...current, value]) params.append(key, item)
+    })
+  }
+
+  function clearFilters() {
+    navigate((params) => FILTER_KEYS.forEach((key) => params.delete(key)))
+  }
+
+  function goToPage(page: number) {
+    const params = new URLSearchParams(window.location.search)
+    if (page > 1) params.set("page", String(page))
+    else params.delete("page")
+    startTransition(() => router.replace(`${pathname}${params.size ? `?${params}` : ""}`))
+  }
 
   return (
-    <div className="flex flex-col gap-5 px-4 pb-32 pt-8">
+    <div className={`flex flex-col gap-5 px-4 pb-32 pt-8 transition-opacity ${pending ? "opacity-60" : "opacity-100"}`} aria-busy={pending}>
       <header className="flex flex-col gap-1">
         <p className="text-sm font-medium text-primary">Buenos días</p>
-        <h1 className="font-serif text-3xl font-extrabold leading-tight text-foreground text-balance">
-          ¿Qué preparamos hoy?
-        </h1>
+        <h1 className="font-serif text-3xl font-extrabold leading-tight text-foreground text-balance">¿Qué preparamos hoy?</h1>
       </header>
 
-      {/* Búsqueda */}
-      <div className="glass flex items-center gap-2.5 rounded-full px-4 py-3">
-        <Search className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar recetas, métodos o baristas..."
-          className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
-        />
-      </div>
+      <search>
+        <form onSubmit={submitSearch} className="glass flex items-center gap-2.5 rounded-full px-4 py-3">
+          <Search className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+          <label htmlFor="recipe-search" className="sr-only">Buscar recetas</label>
+          <input key={filters.q} id="recipe-search" type="search" name="q" defaultValue={filters.q} placeholder="Buscar recetas, métodos o baristas..." className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground" />
+          <button type="submit" className="sr-only">Buscar</button>
+        </form>
+      </search>
 
       <FilterBar
-        filters={filters}
-        onRemove={(f) => setFilters((prev) => prev.filter((x) => x !== f))}
+        filters={chips.map((chip) => labels.get(chip) ?? chip)}
+        onRemove={(label) => {
+          const chip = chips.find((candidate) => labels.get(candidate) === label)
+          if (!chip) return
+          const [key, value] = chip.split(":") as [FilterGroup["key"], string]
+          toggleFilter(key, value)
+        }}
         onMore={() => setSheetOpen(true)}
       />
 
-      {/* Resultados */}
-      <div className="flex flex-col gap-4">
-        {results.length === 0 ? (
-          <p className="rounded-3xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-            Sin resultados
-          </p>
-        ) : (
-          results.map((r, i) => (
-            <RecipeCard key={r._id} recipe={r} onOpen={onOpen} index={i} saved={savedIds.includes(r._id)} />
-          ))
-        )}
+      <div className="flex flex-col gap-4" aria-live="polite">
+        {result.data.length === 0 ? (
+          <p className="rounded-3xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Sin resultados</p>
+        ) : result.data.map((recipe, index) => <RecipeCard key={recipe._id} recipe={recipe} index={index} />)}
       </div>
 
-      {sheetOpen && (
-        <FilterSheet
-          active={filters}
-          onToggle={toggleFilter}
-          onClear={() => setFilters([])}
-          onClose={() => setSheetOpen(false)}
-        />
+      {result.total > result.pageSize && (
+        <nav aria-label="Paginación de recetas" className="flex items-center justify-between gap-3">
+          <button type="button" disabled={result.page <= 1 || pending} onClick={() => goToPage(result.page - 1)} className="rounded-full border border-border px-4 py-2 text-sm disabled:opacity-40">Anterior</button>
+          <span className="text-xs text-muted-foreground">Página {result.page} de {Math.ceil(result.total / result.pageSize)}</span>
+          <button type="button" disabled={result.page * result.pageSize >= result.total || pending} onClick={() => goToPage(result.page + 1)} className="rounded-full border border-border px-4 py-2 text-sm disabled:opacity-40">Siguiente</button>
+        </nav>
       )}
+
+      {sheetOpen && <FilterSheet active={active} onToggle={toggleFilter} onClear={clearFilters} onClose={() => setSheetOpen(false)} />}
     </div>
   )
 }

@@ -2,7 +2,7 @@
 
 import { ChevronRight, Heart } from "lucide-react"
 import Image from "next/image"
-import { METHOD_LABEL, type Recipe } from "@/lib/mock-data"
+import { METHOD_LABEL, type RecipeView } from "@/lib/domain"
 import { formatTemp, mmss, ratio, totalSeconds } from "@/lib/format"
 import { Timeline } from "./timeline"
 
@@ -59,14 +59,24 @@ export function ScreenRecipe({
   onOpenGrinder,
   saved,
   onToggleSaved,
+  liked,
+  likeCount,
+  onToggleLiked,
+  grinderName,
+  grindSetting,
   onRunningChange,
 }: {
-  recipe: Recipe
+  recipe: RecipeView
   tempUnit: "C" | "F"
   onToggleUnit: (unit: "C" | "F") => void
   onOpenGrinder: () => void
   saved: boolean
   onToggleSaved: () => void
+  liked: boolean
+  likeCount: number
+  onToggleLiked: () => void
+  grinderName: string
+  grindSetting: string
   onRunningChange?: (running: boolean) => void
 }) {
   return (
@@ -151,7 +161,7 @@ export function ScreenRecipe({
               ariaLabel="Cambiar molienda"
               value={
                 <span className="inline-flex items-center gap-1 text-primary">
-                  {recipe.grind.target} · {recipe.grind.grinder}
+                  {grindSetting} · {grinderName}
                   <ChevronRight className="h-4 w-4" aria-hidden="true" />
                 </span>
               }
@@ -187,10 +197,10 @@ export function ScreenRecipe({
         <section className="flex flex-col gap-3">
           <SectionTitle>Comunidad</SectionTitle>
           <div className="flex items-center justify-between rounded-3xl border border-border bg-card p-4">
-            <span className="inline-flex items-center gap-2 text-sm text-foreground">
-              <Heart className="h-5 w-5 fill-primary text-primary" aria-hidden="true" />
-              A {recipe.likes} personas les gusta
-            </span>
+            <button type="button" onClick={onToggleLiked} aria-pressed={liked} className="inline-flex items-center gap-2 text-sm text-foreground">
+              <Heart className={`h-5 w-5 text-primary ${liked ? "fill-primary" : ""}`} aria-hidden="true" />
+              A {likeCount} personas les gusta
+            </button>
             <button
               type="button"
               onClick={onToggleSaved}

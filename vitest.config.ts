@@ -5,11 +5,13 @@ export default defineConfig({
   plugins: [react()],
   resolve: { alias: { "@": new URL(".", import.meta.url).pathname } },
   test: {
+    include: ["tests/**/*.test.{ts,tsx}"],
     environment: "jsdom",
     setupFiles: ["./tests/setup.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
+      exclude: ["lib/db.ts", "lib/recipes.ts", "scripts/**", "playwright/**"],
       thresholds: { lines: 80, functions: 80, statements: 80, branches: 75 },
     },
   },

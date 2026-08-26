@@ -1,6 +1,7 @@
 "use client"
 
 import { Bookmark, Search, User } from "lucide-react"
+import Link from "next/link"
 
 export type Tab = "guardados" | "buscar" | "perfil"
 
@@ -10,12 +11,12 @@ const ITEMS: { id: Tab; label: string; icon: typeof Search }[] = [
   { id: "perfil", label: "Perfil", icon: User },
 ]
 
+const HREF: Record<Tab, string> = { guardados: "/saved", buscar: "/recipes", perfil: "/profile" }
+
 export function BottomNav({
   active,
-  onChange,
 }: {
   active: Tab
-  onChange: (tab: Tab) => void
 }) {
   return (
     <nav
@@ -26,10 +27,9 @@ export function BottomNav({
         {ITEMS.map(({ id, label, icon: Icon }) => {
           const isActive = active === id
           return (
-            <button
+            <Link
               key={id}
-              type="button"
-              onClick={() => onChange(id)}
+              href={HREF[id]}
               aria-current={isActive ? "page" : undefined}
               className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition-all duration-300 ${
                 isActive
@@ -39,7 +39,7 @@ export function BottomNav({
             >
               <Icon className="h-5 w-5" aria-hidden="true" />
               <span className={isActive ? "inline" : "sr-only"}>{label}</span>
-            </button>
+            </Link>
           )
         })}
       </div>

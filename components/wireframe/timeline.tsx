@@ -2,14 +2,14 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Pause, Play, RotateCcw } from "lucide-react"
-import type { Recipe } from "@/lib/mock-data"
+import type { RecipeView } from "@/lib/domain"
 import { mmss } from "@/lib/format"
 
 export function Timeline({
   recipe,
   onRunningChange,
 }: {
-  recipe: Recipe
+  recipe: RecipeView
   onRunningChange?: (running: boolean) => void
 }) {
   const [elapsed, setElapsed] = useState(0)
@@ -156,7 +156,7 @@ export function Timeline({
                 }`}
               >
                 <p className="font-mono text-xs text-primary">
-                  {mmss(step.start)} – {mmss(step.end)}
+                  {mmss(step.start)} – {mmss(step.end ?? recipe.steps[i + 1]?.start ?? total)}
                 </p>
                 <p
                   className={`text-sm leading-relaxed ${

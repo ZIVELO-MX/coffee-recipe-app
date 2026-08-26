@@ -1,7 +1,7 @@
-import type { Recipe } from "./mock-data"
+import type { RecipeView } from "./domain"
 
 /** Ratio café:agua, ej. "1:16.7" */
-export function ratio(recipe: Recipe): string {
+export function ratio(recipe: Pick<RecipeView, "water_ml" | "coffee_g">): string {
   const r = recipe.water_ml / recipe.coffee_g
   return `1:${r.toFixed(1)}`
 }
@@ -17,9 +17,8 @@ export function formatTemp(c: number, unit: "C" | "F"): string {
 }
 
 /** Tiempo total de la receta en segundos (fin del último paso) */
-export function totalSeconds(recipe: Recipe): number {
-  if (recipe.steps.length === 0) return 0
-  return recipe.steps[recipe.steps.length - 1].end
+export function totalSeconds(recipe: Pick<RecipeView, "total_seconds">): number {
+  return recipe.total_seconds
 }
 
 /** Segundos a mm:ss */

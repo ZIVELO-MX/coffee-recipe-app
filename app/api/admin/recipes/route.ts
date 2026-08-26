@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { revalidatePath } from "next/cache"
 import { getDatabase } from "@/lib/db"
 import { recipeInputSchema, validateTimeline } from "@/lib/domain"
 import { jsonError } from "@/lib/http"
@@ -12,6 +13,7 @@ export async function POST(request: NextRequest) {
     validateTimeline(parsed.data.steps)
     const now = new Date()
     const result = await (await getDatabase()).collection("recipes").insertOne({ ...parsed.data, created_at: now, updated_at: now })
+    revalidatePath("/recipes")
     return NextResponse.json({ id: result.insertedId.toString() }, { status: 201 })
   } catch (error) {
     if (error instanceof Response) return error

@@ -1,9 +1,10 @@
 # Coffee Recipe App — MVP Product & Implementation Plan
 
-> **Execution status (2026-08-25):** Foundation complete. Git is initialized,
-> the prototype metadata has been removed, MongoDB/Clerk/BrewMark contracts
-> exist, and `pnpm typecheck`, `pnpm test`, `pnpm lint`, and `pnpm build` pass.
-> The remaining work is tracked as the ordered milestones below.
+> **Execution status (2026-08-25):** The product routes now render from MongoDB,
+> Clerk-backed likes/saves/preferences are implemented, and the original five
+> recipes live only in an idempotent seed. Unit, coverage, Mongo integration,
+> anonymous Playwright, typecheck, lint, and build gates pass. Production Clerk,
+> authenticated CI secrets, and the Vercel release remain operational steps.
 
 ## Actionable milestones
 
@@ -15,10 +16,10 @@
 - [x] **M2 — Prototype correctness:** apply all search filters, implement a
   monotonic timer with pause/restart/completion vibration, and synchronize
   saved state across cards, detail and Guardados.
-- [ ] **M3 — Server-rendered product routes:** move Buscar and recipe detail to
+- [x] **M3 — Server-rendered product routes:** move Buscar and recipe detail to
   Server Components, add `/recipes/[id]`, `/saved`, `/profile`, loading/error
   states, URL search params and cache invalidation.
-- [ ] **M4 — Clerk and persistence:** replace fake auth with Clerk, protect
+- [x] **M4 — Clerk and persistence:** replace fake auth with Clerk, protect
   Server Actions and admin mutations, persist likes/saves/preferences and add
   unique MongoDB indexes.
 - [ ] **M5 — Production verification:** add Mongo integration tests, Playwright

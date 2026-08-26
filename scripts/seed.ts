@@ -1,36 +1,31 @@
 import "./load-env"
 import { closeDatabase, getDatabase } from "@/lib/db"
-import { RECIPES } from "@/lib/mock-data"
-import { methodToBrewmark } from "@/lib/domain"
+import { recipeInputSchema, validateTimeline } from "@/lib/domain"
+import { SEED_RECIPES } from "./seed-data"
 
 async function main() {
   const db = await getDatabase()
   const collection = db.collection("recipes")
 
-  for (const recipe of RECIPES) {
+  for (const seedRecipe of SEED_RECIPES) {
+    const { legacy_id, ...input } = seedRecipe
+    const recipe = recipeInputSchema.parse(input)
+    validateTimeline(recipe.steps)
     const now = new Date()
     await collection.updateOne(
-      { legacy_id: recipe._id },
+      { legacy_id },
       {
         $set: {
-          name: recipe.name,
-          author: recipe.author,
-          method: recipe.method,
-          coffee_g: recipe.coffee_g,
-          water_ml: recipe.water_ml,
-          temperature_c: recipe.temperature_c,
-          grind: { target: methodToBrewmark[recipe.method] },
-          preparation: recipe.preparation,
-          steps: recipe.steps,
+          ...recipe,
           updated_at: now,
         },
-        $setOnInsert: { legacy_id: recipe._id, created_at: now },
+        $setOnInsert: { legacy_id, created_at: now },
       },
       { upsert: true },
     )
   }
 
-  console.log(`Seeded ${RECIPES.length} recipes`)
+  console.log(`Seeded ${SEED_RECIPES.length} recipes`)
 }
 
 main()

@@ -4,15 +4,32 @@ import { X } from "lucide-react"
 
 export type FilterGroup = {
   label: string
-  options: string[]
+  key: "method" | "coffee" | "water" | "temperature" | "duration"
+  options: { label: string; value: string }[]
 }
 
 export const FILTER_GROUPS: FilterGroup[] = [
-  { label: "Método", options: ["V60", "Chemex", "Aeropress", "Prensa francesa", "Kalita"] },
-  { label: "Café", options: ["10–15 g", "15–20 g", "20–25 g", "25 g+"] },
-  { label: "Agua", options: ["150–250 ml", "250–350 ml", "350–500 ml", "500 ml+"] },
-  { label: "Temperatura", options: ["85–89 °C", "90–93 °C", "94–96 °C"] },
-  { label: "Tiempo", options: ["< 2:30", "2:30–3:30", "3:30–4:30", "> 4:30"] },
+  { label: "Método", key: "method", options: [
+    { label: "V60", value: "v60" }, { label: "Chemex", value: "chemex" },
+    { label: "AeroPress", value: "aeropress" }, { label: "Prensa francesa", value: "french-press" },
+    { label: "Kalita", value: "kalita" }, { label: "Moka", value: "moka" },
+  ] },
+  { label: "Café", key: "coffee", options: [
+    { label: "10–15 g", value: "10-15" }, { label: "15–20 g", value: "15-20" },
+    { label: "20–25 g", value: "20-25" }, { label: "25 g+", value: "25-plus" },
+  ] },
+  { label: "Agua", key: "water", options: [
+    { label: "150–250 ml", value: "150-250" }, { label: "250–350 ml", value: "250-350" },
+    { label: "350–500 ml", value: "350-500" }, { label: "500 ml+", value: "500-plus" },
+  ] },
+  { label: "Temperatura", key: "temperature", options: [
+    { label: "85–89 °C", value: "85-89" }, { label: "90–93 °C", value: "90-93" },
+    { label: "94–96 °C", value: "94-96" },
+  ] },
+  { label: "Tiempo", key: "duration", options: [
+    { label: "< 2:30", value: "150-less" }, { label: "2:30–3:30", value: "150-210" },
+    { label: "3:30–4:30", value: "210-270" }, { label: "> 4:30", value: "270-plus" },
+  ] },
 ]
 
 export function FilterSheet({
@@ -21,8 +38,8 @@ export function FilterSheet({
   onClear,
   onClose,
 }: {
-  active: string[]
-  onToggle: (value: string) => void
+  active: Record<string, string[]>
+  onToggle: (key: FilterGroup["key"], value: string) => void
   onClear: () => void
   onClose: () => void
 }) {
@@ -60,12 +77,12 @@ export function FilterSheet({
               </p>
               <div className="flex flex-wrap gap-2">
                 {group.options.map((opt) => {
-                  const isActive = active.includes(opt)
+                  const isActive = active[group.key]?.includes(opt.value)
                   return (
                     <button
-                      key={opt}
+                      key={opt.value}
                       type="button"
-                      onClick={() => onToggle(opt)}
+                      onClick={() => onToggle(group.key, opt.value)}
                       aria-pressed={isActive}
                       className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                         isActive
@@ -73,7 +90,7 @@ export function FilterSheet({
                           : "bg-secondary text-foreground hover:bg-accent"
                       }`}
                     >
-                      {opt}
+                      {opt.label}
                     </button>
                   )
                 })}

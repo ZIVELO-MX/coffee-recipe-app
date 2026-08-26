@@ -2,24 +2,22 @@
 
 import { Bookmark, Clock, Heart } from "lucide-react"
 import Image from "next/image"
-import { METHOD_LABEL, type Recipe } from "@/lib/mock-data"
+import Link from "next/link"
+import { METHOD_LABEL, type RecipeView } from "@/lib/domain"
 import { mmss, ratio, totalSeconds } from "@/lib/format"
 
 export function RecipeCard({
   recipe,
-  onOpen,
   index = 0,
-  saved = recipe.saved,
+  saved = recipe.viewer_saved,
 }: {
-  recipe: Recipe
-  onOpen: (id: string) => void
+  recipe: RecipeView
   index?: number
   saved?: boolean
 }) {
   return (
-    <button
-      type="button"
-      onClick={() => onOpen(recipe._id)}
+    <Link
+      href={`/recipes/${recipe._id}`}
       style={{ animationDelay: `${index * 90}ms` }}
       className="group animate-rise relative flex w-full flex-col overflow-hidden rounded-3xl border border-border bg-card text-left transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-2xl active:scale-[0.98]"
     >
@@ -29,6 +27,7 @@ export function RecipeCard({
           src={recipe.image || "/icon.svg"}
           alt={`Café preparado con método ${METHOD_LABEL[recipe.method]}`}
           fill
+          priority={index === 0}
           sizes="(max-width: 400px) 100vw, 400px"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
@@ -67,10 +66,10 @@ export function RecipeCard({
           </span>
           <span className="ml-auto inline-flex items-center gap-1">
             <Heart className="h-3.5 w-3.5" aria-hidden="true" />
-            {recipe.likes}
+            {recipe.like_count}
           </span>
         </div>
       </div>
-    </button>
+    </Link>
   )
 }

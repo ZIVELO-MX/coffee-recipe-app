@@ -14,7 +14,6 @@ export async function requireRecipeAdmin(request: Request) {
 
   const session = await auth()
   const role = (session.sessionClaims?.metadata as { role?: string } | undefined)?.role
-  if (!session.isAuthenticated || role !== "admin") {
-    throw new Response("Forbidden", { status: 403 })
-  }
+  if (!session.userId) throw new Response("Unauthorized", { status: 401 })
+  if (role !== "admin") throw new Response("Forbidden", { status: 403 })
 }

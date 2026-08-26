@@ -4,7 +4,7 @@ import { ChevronRight, LogIn, LogOut, Settings2 } from "lucide-react"
 import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs"
 import Image from "next/image"
 import { getAvatar } from "@/lib/avatars"
-import type { AuthUser } from "@/components/auth/auth-flow"
+import type { ViewerUser } from "@/lib/domain"
 
 export function ScreenPerfil({
   user,
@@ -14,7 +14,7 @@ export function ScreenPerfil({
   onToggleUnit,
   onLogout,
 }: {
-  user: AuthUser
+  user: ViewerUser
   grinder: string
   tempUnit: "C" | "F"
   onOpenGrinder: () => void

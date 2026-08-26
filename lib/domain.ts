@@ -34,11 +34,28 @@ export const recipeInputSchema = z.object({
   grind: z.object({ target: brewmarkMethodSchema }),
   preparation: z.array(z.string().trim().min(1).max(300)).min(1).max(30),
   steps: z.array(recipeStepSchema).min(1).max(100),
-  image: z.string().url().optional(),
+  image: z.string().trim().refine(
+    (value) => {
+      if (/^\/[a-zA-Z0-9/_-]+\.(?:avif|gif|jpe?g|png|webp)$/.test(value)) return true
+      if (!URL.canParse(value)) return false
+      return ["http:", "https:"].includes(new URL(value).protocol)
+    },
+    "Image must be a safe local path or an absolute URL",
+  ).optional(),
 })
 
 export type RecipeInput = z.infer<typeof recipeInputSchema>
 export type RecipeStep = z.infer<typeof recipeStepSchema>
+export type Method = RecipeInput["method"]
+
+export const METHOD_LABEL: Record<Method, string> = {
+  v60: "V60",
+  chemex: "Chemex",
+  aeropress: "AeroPress",
+  "french-press": "Prensa francesa",
+  moka: "Moka",
+  kalita: "Kalita",
+}
 
 export type RecipeDocument = RecipeInput & {
   _id: string
@@ -52,6 +69,59 @@ export type RecipeListItem = Omit<RecipeDocument, "preparation" | "steps"> & {
   viewer_liked: boolean
   viewer_saved: boolean
 }
+
+export type RecipeView = RecipeInput & {
+  _id: string
+  image: string
+  total_seconds: number
+  like_count: number
+  viewer_liked: boolean
+  viewer_saved: boolean
+}
+
+export const temperatureUnitSchema = z.enum(["C", "F"])
+export type TemperatureUnit = z.infer<typeof temperatureUnitSchema>
+
+export type UserPreferences = {
+  temperature_unit: TemperatureUnit
+  default_grinder_slug: string
+  default_grinder_name: string
+}
+
+export type ViewerUser = {
+  name: string
+  email: string
+  avatarId: string
+  guest?: boolean
+}
+
+const rangeTokenSchema = z.string().regex(/^\d+-\d+$|^\d+-(?:plus|less)$/)
+
+export const recipeFiltersSchema = z.object({
+  q: z.string().trim().max(120).default(""),
+  method: z.array(methodSchema).default([]),
+  coffee: z.array(rangeTokenSchema).default([]),
+  water: z.array(rangeTokenSchema).default([]),
+  temperature: z.array(rangeTokenSchema).default([]),
+  duration: z.array(rangeTokenSchema).default([]),
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(1).max(50).default(20),
+})
+
+export type RecipeFilters = z.infer<typeof recipeFiltersSchema>
+
+export type RecipePage = {
+  data: RecipeView[]
+  total: number
+  page: number
+  pageSize: number
+}
+
+export type ActionErrorCode = "AUTH_REQUIRED" | "NOT_FOUND" | "INVALID_INPUT" | "DB_UNAVAILABLE"
+
+export type ActionResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: { code: ActionErrorCode; message: string } }
 
 export const methodToBrewmark: Record<RecipeInput["method"], RecipeInput["grind"]["target"]> = {
   v60: "v60",

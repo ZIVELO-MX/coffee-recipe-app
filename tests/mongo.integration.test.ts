@@ -1,0 +1,57 @@
+import "@/scripts/load-env"
+import { randomUUID } from "node:crypto"
+import { ObjectId } from "mongodb"
+import { afterAll, beforeAll, describe, expect, it } from "vitest"
+import { SEED_RECIPES } from "@/scripts/seed-data"
+
+const enabled = process.env.RUN_MONGO_INTEGRATION === "1" && Boolean(process.env.MONGODB_URI)
+const suite = enabled ? describe : describe.skip
+
+suite("MongoDB recipe persistence", () => {
+  let closeDatabase: () => Promise<void>
+  let getDatabase: typeof import("@/lib/db")["getDatabase"]
+  let getRecipePage: typeof import("@/lib/recipes")["getRecipePage"]
+  let getSavedRecipes: typeof import("@/lib/recipes")["getSavedRecipes"]
+
+  beforeAll(async () => {
+    process.env.MONGODB_DB = `coffee_test_${randomUUID().slice(0, 12)}`
+    const dbModule = await import("@/lib/db")
+    const recipeModule = await import("@/lib/recipes")
+    closeDatabase = dbModule.closeDatabase
+    getDatabase = dbModule.getDatabase
+    getRecipePage = recipeModule.getRecipePage
+    getSavedRecipes = recipeModule.getSavedRecipes
+    const db = await getDatabase()
+    const now = new Date()
+    await db.collection("recipes").insertMany(SEED_RECIPES.map(({ legacy_id, ...recipe }) => ({ ...recipe, legacy_id, created_at: now, updated_at: now })))
+    await db.collection("saved_recipes").createIndex({ clerk_user_id: 1, recipe_id: 1 }, { unique: true })
+    await db.collection("likes").createIndex({ clerk_user_id: 1, recipe_id: 1 }, { unique: true })
+  })
+
+  afterAll(async () => {
+    if (!enabled) return
+    await (await getDatabase()).dropDatabase()
+    await closeDatabase()
+  })
+
+  it("filters recipe ranges and methods", async () => {
+    const result = await getRecipePage({ q: "", method: ["v60"], coffee: [], water: ["250-350"], temperature: [], duration: [], page: 1, pageSize: 20 })
+    expect(result.total).toBe(1)
+    expect(result.data[0]?.name).toBe("V60 clásico balanceado")
+  })
+
+  it("isolates saved recipes and likes by Clerk user", async () => {
+    const db = await getDatabase()
+    const recipe = await db.collection("recipes").findOne({ legacy_id: "r1" })
+    expect(recipe?._id).toBeInstanceOf(ObjectId)
+    await db.collection("saved_recipes").insertOne({ clerk_user_id: "user_a", recipe_id: recipe?._id, created_at: new Date() })
+    await db.collection("likes").insertMany([
+      { clerk_user_id: "user_a", recipe_id: recipe?._id, created_at: new Date() },
+      { clerk_user_id: "user_b", recipe_id: recipe?._id, created_at: new Date() },
+    ])
+    const saved = await getSavedRecipes("user_a")
+    expect(saved).toHaveLength(1)
+    expect(saved[0]).toMatchObject({ viewer_saved: true, viewer_liked: true, like_count: 2 })
+    await expect(db.collection("saved_recipes").insertOne({ clerk_user_id: "user_a", recipe_id: recipe?._id, created_at: new Date() })).rejects.toThrow()
+  })
+})
