@@ -17,7 +17,8 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      # This lockfile intentionally pins releases selected during this change.
+      - run: pnpm install --frozen-lockfile --config.minimumReleaseAge=0
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
@@ -50,7 +51,7 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --config.minimumReleaseAge=0
       - run: pnpm db:indexes
       - run: pnpm db:seed
       - run: pnpm db:seed
@@ -84,7 +85,7 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --config.minimumReleaseAge=0
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm db:indexes && pnpm db:seed
       - run: pnpm test:e2e
