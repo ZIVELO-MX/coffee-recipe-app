@@ -46,6 +46,7 @@ test("the recipe sheet changes to preparation without navigating", async ({ page
 
 test("an authenticated user can persist a saved recipe", async ({ page }) => {
   test.skip(!process.env.CLERK_E2E_USER_EMAIL, "CLERK_E2E_USER_EMAIL is not configured")
+  await setupClerkTestingToken({ page })
   await page.goto("/recipes")
   await clerk.signIn({ page, emailAddress: process.env.CLERK_E2E_USER_EMAIL! })
   await page.reload()
