@@ -2,6 +2,10 @@ import { z } from "zod"
 
 const baseUrl = "https://brewmark.io"
 
+export const FALLBACK_GRINDERS = [
+  { slug: "timemore-c3", brand: "Timemore", name: "Timemore C3" },
+]
+
 const grinderSummarySchema = z.object({
   slug: z.string(),
   brand: z.string(),
