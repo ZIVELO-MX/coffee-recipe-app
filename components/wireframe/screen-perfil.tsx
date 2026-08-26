@@ -27,7 +27,7 @@ export function ScreenPerfil({
       <header className="flex flex-col items-center gap-3 text-center">
         <div className="relative glow-accent h-20 w-20 overflow-hidden rounded-full border-2 border-primary/40">
           <Image
-            src={avatar.src || "/placeholder.svg"}
+            src={avatar.src || "/icon.svg"}
             alt={`Avatar ${avatar.label}`}
             fill
             sizes="80px"

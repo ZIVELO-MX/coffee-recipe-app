@@ -74,7 +74,7 @@ export function ScreenRecipe({
       {/* Hero con imagen y overlay */}
       <div className="relative h-64 w-full shrink-0 overflow-hidden">
         <Image
-          src={recipe.image || "/placeholder.svg"}
+          src={recipe.image || "/icon.svg"}
           alt={`Café preparado con método ${METHOD_LABEL[recipe.method]}`}
           fill
           sizes="(max-width: 400px) 100vw, 400px"

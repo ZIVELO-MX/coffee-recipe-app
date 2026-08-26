@@ -26,7 +26,7 @@ export function RecipeCard({
       {/* Imagen con degradado para legibilidad */}
       <div className="relative h-44 w-full overflow-hidden">
         <Image
-          src={recipe.image || "/placeholder.svg"}
+          src={recipe.image || "/icon.svg"}
           alt={`Café preparado con método ${METHOD_LABEL[recipe.method]}`}
           fill
           sizes="(max-width: 400px) 100vw, 400px"

@@ -57,7 +57,7 @@ export function ScreenAvatar({
               }`}
             >
               <Image
-                src={a.src || "/placeholder.svg"}
+                src={a.src || "/icon.svg"}
                 alt={a.label}
                 fill
                 sizes="(max-width: 400px) 30vw, 120px"
