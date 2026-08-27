@@ -1,6 +1,7 @@
 "use client"
 
 import { Check, Search, X } from "lucide-react"
+import { createPortal } from "react-dom"
 import { useEffect, useMemo, useState } from "react"
 
 export type GrinderOption = { slug: string; brand: string; name: string }
@@ -13,7 +14,6 @@ export function GrinderSelector({ selected, onSelect, onClose }: {
   const [query, setQuery] = useState("")
   const [grinders, setGrinders] = useState<GrinderOption[]>([])
   const [error, setError] = useState("")
-
   useEffect(() => {
     const controller = new AbortController()
     fetch("/api/grinders", { signal: controller.signal })
@@ -34,9 +34,10 @@ export function GrinderSelector({ selected, onSelect, onClose }: {
     return Object.groupBy(filtered, (grinder) => grinder.brand)
   }, [grinders, query])
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/70 backdrop-blur-sm sm:items-center sm:p-4" onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby="grinder-title" className="glass-strong flex max-h-[80vh] w-full max-w-[400px] flex-col rounded-t-[2rem] sm:rounded-[2rem]" onClick={(event) => event.stopPropagation()}>
+  if (typeof document === "undefined") return null
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/70 p-4 backdrop-blur-sm" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-labelledby="grinder-title" className="glass-strong flex max-h-[80vh] w-full max-w-[400px] flex-col rounded-[2rem]" onClick={(event) => event.stopPropagation()}>
         <div className="flex justify-center pt-3 sm:hidden"><span className="h-1 w-10 rounded-full bg-muted-foreground/40" aria-hidden="true" /></div>
         <div className="flex items-center justify-between p-5 pb-3">
           <h2 id="grinder-title" className="font-serif text-xl font-bold text-foreground">Selecciona tu molino</h2>
@@ -63,6 +64,7 @@ export function GrinderSelector({ selected, onSelect, onClose }: {
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

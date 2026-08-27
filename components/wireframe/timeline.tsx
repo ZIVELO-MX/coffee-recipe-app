@@ -26,6 +26,7 @@ export function Timeline({
   const activeIndex = recipe.steps.findLastIndex((step) => elapsed >= step.start)
   const safeActiveIndex = Math.max(0, Math.min(activeIndex, recipe.steps.length - 1))
   const active = recipe.steps[safeActiveIndex]
+  const expanded = focused || running
 
   useEffect(() => {
     onTimerStatusChange(completed ? "completed" : running ? "running" : elapsed > 0 ? "paused" : "idle")
@@ -82,16 +83,16 @@ export function Timeline({
     <div className="flex flex-col gap-5">
       {/* Cronómetro — elemento signature "liquid glass" con glow cálido */}
       <div
-        className={`glass-strong ${focused ? "absolute" : "fixed"} bottom-6 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-[368px] -translate-x-1/2 flex-col gap-4 rounded-3xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] transition-shadow ${
+        className={`glass-strong absolute bottom-6 z-50 flex ${expanded ? "left-1/2 w-[calc(100%-2rem)] max-w-[368px] -translate-x-1/2 gap-4 rounded-3xl p-5" : "inset-x-4 gap-2 rounded-2xl p-3"} pb-[calc(0.75rem+env(safe-area-inset-bottom))] transition-shadow ${
           running ? "animate-pulse-glow" : "glow-accent"
         }`}
       >
         <div className="flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="font-mono text-5xl font-semibold tabular-nums text-foreground">
+            <span className={`${expanded ? "text-5xl" : "text-2xl"} font-mono font-semibold tabular-nums text-foreground`}>
               {mmss(Math.floor(elapsed))}
             </span>
-            <span className="text-sm text-muted-foreground">{active.instruction}</span>
+            <span className={`${expanded ? "text-sm" : "text-xs"} line-clamp-1 text-muted-foreground`}>{active.instruction}</span>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -100,7 +101,7 @@ export function Timeline({
                 reset()
               }}
               aria-label="Reiniciar"
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-foreground transition-transform active:scale-90"
+              className={`flex ${expanded ? "h-12 w-12" : "h-9 w-9"} items-center justify-center rounded-full bg-secondary text-foreground transition-transform active:scale-90`}
             >
               <RotateCcw className="h-5 w-5" aria-hidden="true" />
             </button>
@@ -109,7 +110,7 @@ export function Timeline({
               onClick={toggleRunning}
               aria-label={running ? "Pausar" : completed ? "Completada" : "Iniciar"}
               disabled={completed}
-              className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-90"
+              className={`flex ${expanded ? "h-14 w-14" : "h-10 w-10"} items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-90`}
             >
               {running ? (
                 <Pause className="h-6 w-6 fill-current" aria-hidden="true" />

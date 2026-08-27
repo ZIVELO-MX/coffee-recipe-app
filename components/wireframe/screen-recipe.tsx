@@ -137,10 +137,9 @@ export function ScreenRecipe({
           )}
         </div>
       </header>
-      <div data-drag-handle className="absolute inset-x-0 top-0 z-40 flex h-11 items-center justify-center [touch-action:none]" aria-hidden="true">
-        <span className="h-1.5 w-12 rounded-full bg-muted-foreground/40" />
+      <div data-drag-handle className="pointer-events-none absolute inset-x-0 top-0 z-40 flex h-11 items-center justify-center" aria-hidden="true">
+        <span className="pointer-events-auto h-1.5 w-12 rounded-full bg-muted-foreground/40 [touch-action:none]" />
       </div>
-      {!preparationMode && <>
       {/* Hero con imagen y overlay */}
       <div className="relative h-64 w-full shrink-0 overflow-hidden">
         <Image
@@ -248,7 +247,6 @@ export function ScreenRecipe({
         </section>
 
       </div>
-      </>}
 
       <section className={`flex flex-col gap-3 ${preparationMode ? "min-h-0 flex-1 px-4 pt-5" : "p-4 pt-0"}`} aria-label={preparationMode ? "Preparar receta" : "Tiempo"}>
         {preparationMode ? <div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Tiempo</p><h1 className="mt-1 font-serif text-2xl font-extrabold leading-tight text-foreground">{recipe.name}</h1></div> : <SectionTitle>Tiempo</SectionTitle>}
