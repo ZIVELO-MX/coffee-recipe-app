@@ -67,7 +67,7 @@ export function RecipeSheet({ recipe, preferences, onClose }: { recipe: RecipeVi
       className={`recipe-dialog m-0 mt-auto h-[96dvh] w-full max-w-[400px] overflow-hidden border-0 bg-background p-0 text-foreground backdrop:bg-black/65 sm:mb-4 sm:h-[calc(100dvh-2rem)] sm:rounded-[2.5rem] ${mode === "prepare" ? "recipe-dialog-prepare" : ""} ${closing ? "recipe-dialog-closing" : ""}`}
     >
       <div
-        className="relative flex h-full min-h-0 flex-col"
+        className="relative flex h-full min-h-0 flex-col overflow-y-auto overscroll-contain [touch-action:pan-y]"
         style={{ transform: `translateY(${dragOffset}px)`, transition: dragging ? "none" : "transform 220ms cubic-bezier(0.22, 1, 0.36, 1)" }}
         onPointerDown={startDrag}
         onPointerMove={moveDrag}

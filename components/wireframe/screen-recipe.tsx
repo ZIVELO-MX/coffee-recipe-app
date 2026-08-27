@@ -137,7 +137,9 @@ export function ScreenRecipe({
           )}
         </div>
       </header>
-      <div data-drag-handle className="absolute left-1/2 top-2 z-40 h-1.5 w-12 -translate-x-1/2 rounded-full bg-muted-foreground/40" aria-hidden="true" />
+      <div data-drag-handle className="absolute inset-x-0 top-0 z-40 flex h-11 items-center justify-center" aria-hidden="true">
+        <span className="h-1.5 w-12 rounded-full bg-muted-foreground/40" />
+      </div>
       {!preparationMode && <>
       {/* Hero con imagen y overlay */}
       <div className="relative h-64 w-full shrink-0 overflow-hidden">
