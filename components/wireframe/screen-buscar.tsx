@@ -2,7 +2,7 @@
 
 import { Search } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
-import { type FormEvent, useState, useTransition } from "react"
+import { type FormEvent, useEffect, useState, useTransition } from "react"
 import type { RecipeFilters, RecipePage } from "@/lib/domain"
 import { RecipeCard } from "./recipe-card"
 import { FilterBar } from "./filter-bar"
@@ -19,6 +19,11 @@ export function ScreenBuscar({ result, filters }: { result: RecipePage; filters:
   const active = Object.fromEntries(FILTER_KEYS.map((key) => [key, filters[key]])) as Record<FilterGroup["key"], string[]>
   const labels = new Map(FILTER_GROUPS.flatMap((group) => group.options.map((option) => [`${group.key}:${option.value}`, option.label])))
   const chips = FILTER_KEYS.flatMap((key) => active[key].map((value) => `${key}:${value}`))
+  const [draftFilters, setDraftFilters] = useState(active)
+
+  useEffect(() => {
+    if (sheetOpen) setDraftFilters(active)
+  }, [sheetOpen, filters])
 
   function navigate(mutator: (params: URLSearchParams) => void) {
     const params = new URLSearchParams()
@@ -47,8 +52,29 @@ export function ScreenBuscar({ result, filters }: { result: RecipePage; filters:
     })
   }
 
+  function toggleDraftFilter(key: FilterGroup["key"], value: string) {
+    setDraftFilters((current) => {
+      const values = current[key] ?? []
+      return { ...current, [key]: values.includes(value) ? values.filter((item) => item !== value) : [...values, value] }
+    })
+  }
+
   function clearFilters() {
     navigate((params) => FILTER_KEYS.forEach((key) => params.delete(key)))
+  }
+
+  function clearDraftFilters() {
+    setDraftFilters((current) => Object.fromEntries(FILTER_KEYS.map((key) => [key, []])) as typeof current)
+  }
+
+  function applyDraftFilters() {
+    const params = new URLSearchParams()
+    if (filters.q) params.set("q", filters.q)
+    for (const key of FILTER_KEYS) for (const value of draftFilters[key]) params.append(key, value)
+    if (filters.pageSize !== 20) params.set("pageSize", String(filters.pageSize))
+    params.delete("page")
+    setSheetOpen(false)
+    startTransition(() => router.replace(`${pathname}${params.size ? `?${params}` : ""}`, { scroll: false }))
   }
 
   function goToPage(page: number) {
@@ -99,7 +125,7 @@ export function ScreenBuscar({ result, filters }: { result: RecipePage; filters:
         </nav>
       )}
 
-      {sheetOpen && <FilterSheet active={active} onToggle={toggleFilter} onClear={clearFilters} onClose={() => setSheetOpen(false)} />}
+      {sheetOpen && <FilterSheet active={draftFilters} onToggle={toggleDraftFilter} onClear={clearDraftFilters} onApply={applyDraftFilters} onClose={() => setSheetOpen(false)} />}
     </div>
   )
 }

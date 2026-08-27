@@ -36,11 +36,13 @@ export function FilterSheet({
   active,
   onToggle,
   onClear,
+  onApply,
   onClose,
 }: {
   active: Record<string, string[]>
   onToggle: (key: FilterGroup["key"], value: string) => void
   onClear: () => void
+  onApply: () => void
   onClose: () => void
 }) {
   return (
@@ -61,7 +63,7 @@ export function FilterSheet({
           <h2 className="font-serif text-xl font-bold text-foreground">Filtros</h2>
           <button
             type="button"
-            onClick={onClose}
+            onClick={onApply}
             aria-label="Cerrar"
             className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-muted-foreground"
           >
