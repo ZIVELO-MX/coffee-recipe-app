@@ -82,7 +82,7 @@ export function Timeline({
     <div className="flex flex-col gap-5">
       {/* Cronómetro — elemento signature "liquid glass" con glow cálido */}
       <div
-        className={`glass-strong fixed bottom-6 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-[368px] -translate-x-1/2 flex-col gap-4 rounded-3xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] transition-shadow ${
+        className={`glass-strong ${focused ? "absolute" : "fixed"} bottom-6 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-[368px] -translate-x-1/2 flex-col gap-4 rounded-3xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] transition-shadow ${
           running ? "animate-pulse-glow" : "glow-accent"
         }`}
       >
