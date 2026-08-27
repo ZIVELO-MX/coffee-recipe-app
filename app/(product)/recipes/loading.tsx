@@ -9,7 +9,7 @@ export default function RecipesLoading() {
       </div>
       <div className="h-12 animate-pulse rounded-full bg-secondary" />
       <div className="h-10 animate-pulse rounded-full bg-secondary" />
-      <RecipeCardsSkeleton />
+      <RecipeCardsSkeleton count={1} />
     </div>
   )
 }
