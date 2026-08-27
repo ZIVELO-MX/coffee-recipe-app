@@ -111,7 +111,7 @@ export function ScreenRecipe({
 
   return (
     <div className="flex min-h-full flex-col pb-4">
-      <div className="sticky top-0 z-30 h-16 shrink-0 bg-background/90 pt-2 backdrop-blur-xl">
+      <div className="sticky top-0 z-30 h-16 shrink-0 bg-background/90 pt-2 backdrop-blur-xl relative">
         <span data-drag-handle className="absolute inset-x-14 top-0 z-40 flex h-8 items-start justify-center pt-2 [touch-action:none]" aria-label="Desliza hacia abajo para cerrar" role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") onRequestClose() }}>
           <span className="h-1.5 w-12 rounded-full bg-muted-foreground/40" />
         </span>
