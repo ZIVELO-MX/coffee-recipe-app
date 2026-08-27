@@ -1,7 +1,8 @@
 "use client"
 
 import { Check, Search, X } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { createPortal } from "react-dom"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 export type GrinderOption = { slug: string; brand: string; name: string }
 
@@ -13,6 +14,11 @@ export function GrinderSelector({ selected, onSelect, onClose }: {
   const [query, setQuery] = useState("")
   const [grinders, setGrinders] = useState<GrinderOption[]>([])
   const [error, setError] = useState("")
+  const anchorRef = useRef<HTMLSpanElement>(null)
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
+  useEffect(() => {
+    setPortalTarget(anchorRef.current?.closest("dialog") ?? document.body)
+  }, [])
   useEffect(() => {
     const controller = new AbortController()
     fetch("/api/grinders", { signal: controller.signal })
@@ -33,8 +39,11 @@ export function GrinderSelector({ selected, onSelect, onClose }: {
     return Object.groupBy(filtered, (grinder) => grinder.brand)
   }, [grinders, query])
 
+  if (!portalTarget) return <span ref={anchorRef} aria-hidden="true" />
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/70 p-4 backdrop-blur-sm" onClick={onClose}>
+    <>
+      <span ref={anchorRef} aria-hidden="true" />
+      {createPortal(<div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/70 p-4 backdrop-blur-sm" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-labelledby="grinder-title" className="glass-strong flex max-h-[80vh] w-full max-w-[400px] flex-col rounded-[2rem]" onClick={(event) => event.stopPropagation()}>
         <div className="flex justify-center pt-3 sm:hidden"><span className="h-1 w-10 rounded-full bg-muted-foreground/40" aria-hidden="true" /></div>
         <div className="flex items-center justify-between p-5 pb-3">
@@ -62,6 +71,7 @@ export function GrinderSelector({ selected, onSelect, onClose }: {
           ))}
         </div>
       </div>
-    </div>
+      </div>, portalTarget)}
+    </>
   )
 }
