@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { type FormEvent, useEffect, useState, useTransition } from "react"
 import type { RecipeFilters, RecipePage } from "@/lib/domain"
 import { RecipeCard } from "./recipe-card"
+import { RecipeCardsSkeleton } from "./recipe-card-skeleton"
 import { FilterBar } from "./filter-bar"
 import { FILTER_GROUPS, FilterSheet, type FilterGroup } from "./filter-sheet"
 
@@ -112,7 +113,9 @@ export function ScreenBuscar({ result, filters }: { result: RecipePage; filters:
       />
 
       <div className="flex flex-col gap-4" aria-live="polite">
-        {result.data.length === 0 ? (
+        {pending ? (
+          <RecipeCardsSkeleton />
+        ) : result.data.length === 0 ? (
           <p className="rounded-3xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Sin resultados</p>
         ) : result.data.map((recipe, index) => <RecipeCard key={recipe._id} recipe={recipe} index={index} />)}
       </div>
