@@ -18,6 +18,7 @@ export function Timeline({
   const [elapsed, setElapsed] = useState(0)
   const [running, setRunning] = useState(false)
   const [completed, setCompleted] = useState(false)
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
   const startedAt = useRef<number | null>(null)
   const pausedAt = useRef(0)
   const notifiedStep = useRef(-1)
@@ -29,6 +30,11 @@ export function Timeline({
   const safeActiveIndex = Math.max(0, Math.min(activeIndex, recipe.steps.length - 1))
   const active = recipe.steps[safeActiveIndex]
   const expanded = focused || running
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setPortalTarget(document.querySelector("dialog[open]")), 0)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     onTimerStatusChange(completed ? "completed" : running ? "running" : elapsed > 0 ? "paused" : "idle")
@@ -77,7 +83,7 @@ export function Timeline({
 
   const timer = (
     <div
-      className={`glass-strong fixed bottom-6 left-1/2 z-[100] flex ${expanded ? "w-[calc(100%-2rem)] max-w-[368px] -translate-x-1/2 gap-4 rounded-3xl p-5" : "w-[calc(100%-2rem)] max-w-[368px] -translate-x-1/2 gap-2 rounded-2xl p-3"} flex-col pb-[calc(0.75rem+env(safe-area-inset-bottom))] transition-shadow ${
+      className={`glass-strong absolute bottom-6 left-1/2 z-[100] flex ${expanded ? "w-[calc(100%-2rem)] max-w-[368px] -translate-x-1/2 gap-4 rounded-3xl p-5" : "w-[calc(100%-2rem)] max-w-[368px] -translate-x-1/2 gap-2 rounded-2xl p-3"} flex-col pb-[calc(0.75rem+env(safe-area-inset-bottom))] transition-shadow ${
         running ? "animate-pulse-glow" : "glow-accent"
       }`}
     >
@@ -101,7 +107,7 @@ export function Timeline({
   return (
     <div className="flex flex-col gap-5">
       {/* Cronómetro — elemento signature "liquid glass" con glow cálido */}
-      {typeof document !== "undefined" && createPortal(timer, document.body)}
+      {portalTarget && createPortal(timer, portalTarget)}
 
       {/* Lista vertical de pasos */}
       <ol className="flex flex-col pb-2">
