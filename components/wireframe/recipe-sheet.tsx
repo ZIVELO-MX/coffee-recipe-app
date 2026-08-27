@@ -36,7 +36,7 @@ export function RecipeSheet({ recipe, preferences, onClose }: { recipe: RecipeVi
   }, [mode, onClose, timerStatus])
 
   function startDrag(event: React.PointerEvent<HTMLDivElement>) {
-    if (timerStatus === "running" || (event.target instanceof Element && event.target.closest("button, [data-no-drag]"))) return
+    if (timerStatus === "running" || !(event.target instanceof Element) || (!event.target.closest("[data-drag-handle]") && !event.target.closest("header")) || event.target.closest("button, [data-no-drag]")) return
     dragStart.current = { y: event.clientY, time: performance.now() }
     setDragging(true)
     event.currentTarget.setPointerCapture(event.pointerId)

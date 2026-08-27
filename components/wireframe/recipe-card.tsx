@@ -3,6 +3,7 @@
 import { Bookmark, Clock, Heart } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { useRecipeOverlay } from "./product-frame"
 import { METHOD_LABEL, type RecipeView } from "@/lib/domain"
 import { mmss, ratio, totalSeconds } from "@/lib/format"
 
@@ -15,18 +16,15 @@ export function RecipeCard({
   index?: number
   saved?: boolean
 }) {
+  const openRecipe = useRecipeOverlay()
   return (
     <Link
       href={`/recipes/${recipe._id}`}
       scroll={false}
       data-recipe-id={recipe._id}
       onClick={(event) => {
-        const viewport = event.currentTarget.closest<HTMLElement>("[data-product-scroll]")
-        sessionStorage.setItem("coffee-recipe-origin", JSON.stringify({
-          path: `${window.location.pathname}${window.location.search}`,
-          top: viewport?.scrollTop ?? 0,
-          recipeId: recipe._id,
-        }))
+        event.preventDefault()
+        openRecipe(recipe)
       }}
       style={{ animationDelay: `${index * 90}ms` }}
       className="group animate-rise relative flex w-full flex-col overflow-hidden rounded-3xl border border-border bg-card text-left transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-2xl active:scale-[0.98]"

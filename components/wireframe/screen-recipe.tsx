@@ -125,11 +125,11 @@ export function ScreenRecipe({
           </button>
           {menuOpen && (
             <div role="menu" aria-label="Acciones de receta" className="glass-strong absolute right-0 top-12 z-50 flex min-w-52 flex-col gap-1 rounded-2xl p-2 shadow-2xl">
-              <button data-no-drag role="menuitemcheckbox" aria-checked={liked} type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => { onToggleLiked(); setMenuOpen(false) }} className="flex items-center justify-between gap-4 rounded-xl px-3 py-3 text-left text-sm hover:bg-secondary">
+              <button data-no-drag role="menuitemcheckbox" aria-checked={liked} type="button" onPointerDown={(event) => event.stopPropagation()} onClick={onToggleLiked} className="flex items-center justify-between gap-4 rounded-xl px-3 py-3 text-left text-sm hover:bg-secondary">
                 <span className="inline-flex items-center gap-2"><Heart className={`h-4 w-4 text-primary ${liked ? "fill-primary" : ""}`} aria-hidden="true" />{liked ? "Quitar like" : "Dar like"}</span>
                 {liked && <Check className="h-4 w-4 text-primary" aria-hidden="true" />}
               </button>
-              <button data-no-drag role="menuitemcheckbox" aria-checked={saved} type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => { onToggleSaved(); setMenuOpen(false) }} className="flex items-center justify-between gap-4 rounded-xl px-3 py-3 text-left text-sm hover:bg-secondary">
+              <button data-no-drag role="menuitemcheckbox" aria-checked={saved} type="button" onPointerDown={(event) => event.stopPropagation()} onClick={onToggleSaved} className="flex items-center justify-between gap-4 rounded-xl px-3 py-3 text-left text-sm hover:bg-secondary">
                 <span className="inline-flex items-center gap-2"><Bookmark className={`h-4 w-4 text-primary ${saved ? "fill-primary" : ""}`} aria-hidden="true" />{saved ? "Quitar guardado" : "Guardar"}</span>
                 {saved && <Check className="h-4 w-4 text-primary" aria-hidden="true" />}
               </button>
@@ -137,6 +137,7 @@ export function ScreenRecipe({
           )}
         </div>
       </header>
+      <div data-drag-handle className="absolute left-1/2 top-2 z-40 h-1.5 w-12 -translate-x-1/2 rounded-full bg-muted-foreground/40" aria-hidden="true" />
       {!preparationMode && <>
       {/* Hero con imagen y overlay */}
       <div className="relative h-64 w-full shrink-0 overflow-hidden">
