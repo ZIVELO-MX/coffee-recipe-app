@@ -2,14 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { RecipeView, UserPreferences } from "@/lib/domain"
-import { RecipeExperience, type RecipeMode, type TimerStatus } from "./recipe-experience"
+import { RecipeExperience, type TimerStatus } from "./recipe-experience"
 
 export function RecipeSheet({ recipe, preferences, onClose }: { recipe: RecipeView; preferences: UserPreferences; onClose: () => void }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const dragStart = useRef<{ y: number; time: number } | null>(null)
   const closeTimer = useRef<number | null>(null)
-  const [mode, setMode] = useState<RecipeMode>("consult")
   const [timerStatus, setTimerStatus] = useState<TimerStatus>("idle")
   const [dragOffset, setDragOffset] = useState(0)
   const [dragging, setDragging] = useState(false)
@@ -59,7 +58,7 @@ export function RecipeSheet({ recipe, preferences, onClose }: { recipe: RecipeVi
       aria-label={`Receta ${recipe.name}`}
       onCancel={(event) => { event.preventDefault(); requestDismiss() }}
       onClick={(event) => { if (event.target === event.currentTarget) requestDismiss() }}
-      className={`recipe-dialog m-0 mt-auto h-[96dvh] w-full max-w-[400px] overflow-hidden border-0 bg-background p-0 text-foreground backdrop:bg-black/65 sm:mb-4 sm:h-[calc(100dvh-2rem)] sm:rounded-[2.5rem] ${mode === "prepare" ? "recipe-dialog-prepare" : ""} ${closing ? "recipe-dialog-closing" : ""}`}
+      className={`recipe-dialog m-0 mt-auto h-[96dvh] w-full max-w-[400px] overflow-hidden border-0 bg-background p-0 text-foreground backdrop:bg-black/65 sm:mb-4 sm:h-[calc(100dvh-2rem)] sm:rounded-[2.5rem] ${closing ? "recipe-dialog-closing" : ""}`}
     >
       <div
         ref={scrollContainerRef}
@@ -74,12 +73,10 @@ export function RecipeSheet({ recipe, preferences, onClose }: { recipe: RecipeVi
         <RecipeExperience
           recipe={recipe}
           initialPreferences={preferences}
-          mode={mode}
           timerStatus={timerStatus}
           scrollContainerRef={scrollContainerRef}
           onTimerStatusChange={(status) => {
             setTimerStatus(status)
-            if (status === "running") setMode("prepare")
           }}
           onRequestClose={requestDismiss}
         />

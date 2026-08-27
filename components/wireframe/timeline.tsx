@@ -8,13 +8,11 @@ import { mmss } from "@/lib/format"
 
 export function Timeline({
   recipe,
-  focused = false,
   scrollContainerRef,
   dockRef,
   onTimerStatusChange,
 }: {
   recipe: RecipeView
-  focused?: boolean
   scrollContainerRef: RefObject<HTMLDivElement | null>
   dockRef: RefObject<HTMLDivElement | null>
   onTimerStatusChange: (status: "idle" | "running" | "paused" | "completed") => void
@@ -34,7 +32,6 @@ export function Timeline({
   const activeIndex = recipe.steps.findLastIndex((step) => elapsed >= step.start)
   const safeActiveIndex = Math.max(0, Math.min(activeIndex, recipe.steps.length - 1))
   const active = recipe.steps[safeActiveIndex]
-  const expanded = focused || running
 
   useEffect(() => {
     let observer: IntersectionObserver | undefined
@@ -68,7 +65,7 @@ export function Timeline({
     const observer = new ResizeObserver(updateDockSize)
     observer.observe(timer)
     return () => observer.disconnect()
-  }, [dockRef, docked, expanded, portalTarget])
+  }, [dockRef, docked, portalTarget])
 
   useEffect(() => {
     onTimerStatusChange(completed ? "completed" : running ? "running" : elapsed > 0 ? "paused" : "idle")
@@ -117,20 +114,19 @@ export function Timeline({
   const timer = (
     <div
       ref={timerRef}
-      className={`glass-strong z-[100] flex ${docked ? "relative w-full" : "absolute bottom-6 left-1/2 w-[calc(100%-2rem)] max-w-[368px] -translate-x-1/2"} ${expanded ? "gap-4 rounded-3xl p-5" : "gap-2 rounded-2xl p-3"} flex-col pb-[calc(0.75rem+env(safe-area-inset-bottom))] transition-[box-shadow,transform] ${
+      className={`glass-strong z-[100] flex ${docked ? "relative w-full" : "absolute bottom-6 left-1/2 w-[calc(100%-2rem)] max-w-[368px] -translate-x-1/2"} gap-2 rounded-2xl p-3 flex-col pb-[calc(0.75rem+env(safe-area-inset-bottom))] transition-[box-shadow,transform] ${
         running ? "animate-pulse-glow" : "glow-accent"
       }`}
     >
       <div className="flex items-center justify-between">
         <div className="flex flex-col">
-          <span className={`${expanded ? "text-5xl" : "text-2xl"} font-mono font-semibold tabular-nums text-foreground`}>
+          <span className="text-2xl font-mono font-semibold tabular-nums text-foreground">
             {mmss(Math.floor(elapsed))}
           </span>
-          <span className={`${expanded ? "text-sm" : "text-xs"} line-clamp-1 text-muted-foreground`}>{active.instruction}</span>
         </div>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={reset} aria-label="Reiniciar" className={`flex ${expanded ? "h-12 w-12" : "h-9 w-9"} items-center justify-center rounded-full bg-secondary text-foreground transition-transform active:scale-90`}><RotateCcw className="h-5 w-5" aria-hidden="true" /></button>
-          <button type="button" onClick={toggleRunning} aria-label={running ? "Pausar" : completed ? "Completada" : "Iniciar"} disabled={completed} className={`flex ${expanded ? "h-14 w-14" : "h-10 w-10"} items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-90`}>
+          <button type="button" onClick={reset} aria-label="Reiniciar" className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-foreground transition-transform active:scale-90"><RotateCcw className="h-5 w-5" aria-hidden="true" /></button>
+          <button type="button" onClick={toggleRunning} aria-label={running ? "Pausar" : completed ? "Completada" : "Iniciar"} disabled={completed} className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-90">
             {running ? <Pause className="h-6 w-6 fill-current" aria-hidden="true" /> : <Play className="h-6 w-6 fill-current" aria-hidden="true" />}
           </button>
         </div>
@@ -149,7 +145,7 @@ export function Timeline({
           const isActive = i === safeActiveIndex && !completed
           const isDone = completed || i < safeActiveIndex
           return (
-            <li ref={isActive ? activeStepRef : undefined} key={i} className={`flex gap-3 transition-opacity ${focused && !isActive && Math.abs(i - safeActiveIndex) > 1 ? "opacity-45" : ""}`}>
+            <li ref={isActive ? activeStepRef : undefined} key={i} className="flex gap-3 transition-opacity">
               {/* Riel */}
               <div className="flex flex-col items-center">
                 <span
@@ -173,7 +169,7 @@ export function Timeline({
               {/* Contenido */}
               <button
                 type="button"
-                className={`${focused && isActive ? "mb-4 min-h-36 p-6" : "mb-2.5 p-4"} flex-1 rounded-2xl border text-left transition-colors ${
+                className={`mb-2.5 flex-1 rounded-2xl border p-4 text-left transition-colors ${
                   isActive
                     ? "border-primary/50 bg-primary/10"
                     : "border-border bg-card"
@@ -184,7 +180,7 @@ export function Timeline({
                 </p>
                 <p
                   className={`text-sm leading-relaxed ${
-                    isActive ? `${focused ? "text-lg font-bold" : "font-semibold"} text-foreground` : "text-muted-foreground"
+                    isActive ? "font-semibold text-foreground" : "text-muted-foreground"
                   }`}
                 >
                   {step.instruction}

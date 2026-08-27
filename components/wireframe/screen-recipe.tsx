@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, type RefObject } from "react"
 import { METHOD_LABEL, type RecipeView } from "@/lib/domain"
 import { formatTemp, mmss, ratio, totalSeconds } from "@/lib/format"
 import { Timeline } from "./timeline"
-import type { RecipeMode, TimerStatus } from "./recipe-experience"
+import type { TimerStatus } from "./recipe-experience"
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
@@ -56,7 +56,6 @@ function SpecRow({
 
 export function ScreenRecipe({
   recipe,
-  mode,
   timerStatus,
   scrollContainerRef,
   tempUnit,
@@ -73,7 +72,6 @@ export function ScreenRecipe({
   onRequestClose,
 }: {
   recipe: RecipeView
-  mode: RecipeMode
   timerStatus: TimerStatus
   scrollContainerRef: RefObject<HTMLDivElement | null>
   tempUnit: "C" | "F"
@@ -93,8 +91,6 @@ export function ScreenRecipe({
   const menuRef = useRef<HTMLDivElement>(null)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
   const timerDockRef = useRef<HTMLDivElement>(null)
-  const preparationMode = mode === "prepare"
-
   useEffect(() => {
     if (!menuOpen) return
     function handlePointerDown(event: PointerEvent) {
@@ -115,7 +111,7 @@ export function ScreenRecipe({
   }, [menuOpen])
 
   return (
-    <div className={`flex min-h-full flex-col pb-4 ${preparationMode ? "recipe-preparation" : ""}`}>
+    <div className="flex min-h-full flex-col pb-4">
       <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between bg-background/90 px-4 pt-2 backdrop-blur-xl" aria-label="Acciones de receta">
         <span data-drag-handle className="absolute inset-x-14 top-0 flex h-8 items-start justify-center pt-2 [touch-action:none]" aria-hidden="true">
           <span className="h-1.5 w-12 rounded-full bg-muted-foreground/40" />
@@ -249,9 +245,9 @@ export function ScreenRecipe({
 
       </div>
 
-      <section className={`flex flex-col gap-3 ${preparationMode ? "min-h-0 flex-1 px-4 pt-5" : "p-4 pt-0"}`} aria-label={preparationMode ? "Preparar receta" : "Tiempo"}>
-        {preparationMode ? <div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Tiempo</p><h1 className="mt-1 font-serif text-2xl font-extrabold leading-tight text-foreground">{recipe.name}</h1></div> : <SectionTitle>Tiempo</SectionTitle>}
-        <Timeline recipe={recipe} focused={preparationMode} scrollContainerRef={scrollContainerRef} dockRef={timerDockRef} onTimerStatusChange={onTimerStatusChange} />
+      <section className="flex flex-col gap-3 p-4 pt-0" aria-label="Tiempo">
+        <SectionTitle>Tiempo</SectionTitle>
+        <Timeline recipe={recipe} scrollContainerRef={scrollContainerRef} dockRef={timerDockRef} onTimerStatusChange={onTimerStatusChange} />
       </section>
 
       <section className="flex flex-col gap-3 p-4 pt-0">

@@ -11,13 +11,11 @@ const INTENT_KEY = "coffee-recipe-pending-intent"
 const PREFERENCES_KEY = "coffee-recipe-guest-preferences"
 type PendingIntent = { recipeId: string; kind: "saved" | "liked"; value: boolean }
 
-export type RecipeMode = "consult" | "prepare"
 export type TimerStatus = "idle" | "running" | "paused" | "completed"
 
-export function RecipeExperience({ recipe, initialPreferences, mode, timerStatus, scrollContainerRef, onTimerStatusChange, onRequestClose }: {
+export function RecipeExperience({ recipe, initialPreferences, timerStatus, scrollContainerRef, onTimerStatusChange, onRequestClose }: {
   recipe: RecipeView
   initialPreferences: UserPreferences
-  mode: RecipeMode
   timerStatus: TimerStatus
   scrollContainerRef: RefObject<HTMLDivElement | null>
   onTimerStatusChange: (status: TimerStatus) => void
@@ -130,7 +128,6 @@ export function RecipeExperience({ recipe, initialPreferences, mode, timerStatus
     <>
       <ScreenRecipe
         recipe={recipe}
-        mode={mode}
         timerStatus={timerStatus}
         scrollContainerRef={scrollContainerRef}
         tempUnit={preferences.temperature_unit}
