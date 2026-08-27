@@ -63,7 +63,7 @@ export function FilterSheet({
           <h2 className="font-serif text-xl font-bold text-foreground">Filtros</h2>
           <button
             type="button"
-            onClick={onApply}
+            onClick={onClose}
             aria-label="Cerrar"
             className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-muted-foreground"
           >
@@ -111,7 +111,7 @@ export function FilterSheet({
           </button>
           <button
             type="button"
-            onClick={onClose}
+            onClick={onApply}
             className="flex-1 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.98]"
           >
             Ver resultados
