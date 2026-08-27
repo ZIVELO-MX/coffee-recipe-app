@@ -65,7 +65,7 @@ export function RecipeSheet({ recipe, preferences, onClose }: { recipe: RecipeVi
       onPointerCancel={endDrag}
       onCancel={(event) => { event.preventDefault(); requestDismiss() }}
       onClick={(event) => { if (event.target === event.currentTarget) requestDismiss() }}
-      className={`recipe-dialog m-0 mt-auto h-[96dvh] w-full max-w-[400px] overflow-hidden border-0 bg-background p-0 text-foreground backdrop:bg-black/65 sm:mb-4 sm:h-[calc(100dvh-2rem)] sm:rounded-[2.5rem] ${closing ? "recipe-dialog-closing" : ""}`}
+      className={`recipe-dialog m-0 mt-auto h-[100dvh] w-screen max-w-none overflow-hidden border-0 bg-background p-0 text-foreground backdrop:bg-black/65 sm:mb-4 sm:h-[calc(100dvh-2rem)] sm:w-full sm:max-w-[400px] sm:rounded-[2.5rem] ${closing ? "recipe-dialog-closing" : ""}`}
     >
       <span data-drag-handle className="pointer-events-auto absolute inset-x-14 top-0 z-40 flex h-8 items-start justify-center pt-2 [touch-action:none]" aria-label="Desliza hacia abajo para cerrar" role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") requestDismiss() }}>
         <span className="h-1.5 w-12 rounded-full bg-muted-foreground/40" />
@@ -73,7 +73,7 @@ export function RecipeSheet({ recipe, preferences, onClose }: { recipe: RecipeVi
       <div
         ref={scrollContainerRef}
         data-recipe-scroll
-        className="relative flex h-full min-h-0 flex-col overflow-y-auto overscroll-contain [touch-action:pan-y]"
+        className="scrollbar-mobile-hidden relative flex h-full min-h-0 flex-col overflow-y-auto overscroll-contain [touch-action:pan-y]"
         style={{ transform: dragOffset ? `translateY(${dragOffset}px)` : undefined, transition: dragging ? "none" : "transform 220ms cubic-bezier(0.22, 1, 0.36, 1)" }}
       >
         <RecipeExperience

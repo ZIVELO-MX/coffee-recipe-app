@@ -112,6 +112,17 @@
 }
 
 @layer utilities {
+  @media (max-width: 639px) {
+    .scrollbar-mobile-hidden {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .scrollbar-mobile-hidden::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
   /* Apple-style liquid glass: translucent surface, blur, soft top highlight */
   .glass {
     background-color: oklch(0.86 0.02 70 / 0.06);

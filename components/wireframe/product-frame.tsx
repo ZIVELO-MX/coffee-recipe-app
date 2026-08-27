@@ -45,7 +45,7 @@ export function ProductFrame({ children, recipeSlot, initialPreferences = DEFAUL
     <RecipeOverlayContext.Provider value={setSelectedRecipe}>
       <main className="flex min-h-screen justify-center bg-background">
         <div className="relative flex h-[100dvh] w-full max-w-[400px] flex-col overflow-hidden bg-background sm:my-4 sm:h-[calc(100dvh-2rem)] sm:rounded-[2.5rem] sm:border sm:border-border sm:shadow-2xl">
-          <div ref={viewportRef} data-product-scroll className="flex-1 overflow-y-auto overscroll-contain">{children}</div>
+          <div ref={viewportRef} data-product-scroll className="scrollbar-mobile-hidden flex-1 overflow-y-auto overscroll-contain">{children}</div>
           <BottomNav active={active} />
         </div>
       </main>
