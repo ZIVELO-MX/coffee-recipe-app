@@ -114,11 +114,9 @@ export function ScreenRecipe({
   return (
     <div className={`flex min-h-full flex-col pb-40 ${preparationMode ? "recipe-preparation" : ""}`}>
       <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between bg-background/90 px-4 backdrop-blur-xl" aria-label="Acciones de receta">
-        {timerStatus !== "running" ? (
-          <button data-no-drag type="button" onPointerDown={(event) => event.stopPropagation()} onClick={onRequestClose} aria-label={preparationMode ? "Contraer receta" : "Cerrar receta"} className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-secondary">
-            <X className="h-5 w-5" aria-hidden="true" />
-          </button>
-        ) : <span className="h-10 w-10" aria-hidden="true" />}
+        <button data-no-drag type="button" onPointerDown={(event) => event.stopPropagation()} onClick={onRequestClose} aria-label="Cerrar receta" className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-secondary">
+          <X className="h-5 w-5" aria-hidden="true" />
+        </button>
         <div ref={menuRef} className="relative ml-auto">
           <button data-no-drag ref={menuButtonRef} type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => setMenuOpen((open) => !open)} aria-label="Más acciones" aria-haspopup="menu" aria-expanded={menuOpen} className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-secondary">
             <Ellipsis className="h-5 w-5" aria-hidden="true" />
@@ -253,13 +251,13 @@ export function ScreenRecipe({
         <Timeline recipe={recipe} focused={preparationMode} onTimerStatusChange={onTimerStatusChange} />
       </section>
 
-      {!preparationMode && <section className="flex flex-col gap-3 p-4 pt-0">
+      <section className="flex flex-col gap-3 p-4 pt-0">
         <SectionTitle>Comunidad</SectionTitle>
         <div className="flex items-center justify-between rounded-3xl border border-border bg-card p-4">
           <span className="inline-flex items-center gap-2 text-sm text-foreground"><Heart className={`h-5 w-5 text-primary ${liked ? "fill-primary" : ""}`} aria-hidden="true" /> A {likeCount} personas les gusta</span>
           <span className="rounded-full bg-secondary px-4 py-2 text-sm font-medium text-foreground">{saved ? "Guardada" : "No guardada"}</span>
         </div>
-      </section>}
+      </section>
     </div>
   )
 }

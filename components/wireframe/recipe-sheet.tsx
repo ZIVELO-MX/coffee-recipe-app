@@ -24,12 +24,6 @@ export function RecipeSheet({ recipe, preferences, onClose }: { recipe: RecipeVi
   }, [])
 
   const requestDismiss = useCallback(() => {
-    if (timerStatus === "running") return
-    if (mode === "prepare") {
-      setMode("consult")
-      setDragOffset(0)
-      return
-    }
     setClosing(true)
     dialogRef.current?.close()
     closeTimer.current = window.setTimeout(onClose, 120)

@@ -160,6 +160,7 @@ export function Timeline({
           )
         })}
       </ol>
+      <div aria-hidden="true" className={expanded ? "h-40 shrink-0" : "h-24 shrink-0"} />
     </div>
   )
 }
