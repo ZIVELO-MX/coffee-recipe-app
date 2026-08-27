@@ -32,11 +32,17 @@ export const metadata: Metadata = {
     ],
     apple: '/apple-icon.png',
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Cafeína',
+  },
 }
 
 export const viewport: Viewport = {
   colorScheme: 'dark',
   themeColor: '#1a1712',
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({

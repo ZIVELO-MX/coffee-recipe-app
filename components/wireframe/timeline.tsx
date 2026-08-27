@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, type RefObject } from "react"
 import { createPortal } from "react-dom"
 import { Pause, Play, RotateCcw } from "lucide-react"
 import type { RecipeView } from "@/lib/domain"
@@ -9,21 +9,26 @@ import { mmss } from "@/lib/format"
 export function Timeline({
   recipe,
   focused = false,
+  scrollContainerRef,
+  dockRef,
   onTimerStatusChange,
 }: {
   recipe: RecipeView
   focused?: boolean
+  scrollContainerRef: RefObject<HTMLDivElement | null>
+  dockRef: RefObject<HTMLDivElement | null>
   onTimerStatusChange: (status: "idle" | "running" | "paused" | "completed") => void
 }) {
   const [elapsed, setElapsed] = useState(0)
   const [running, setRunning] = useState(false)
   const [completed, setCompleted] = useState(false)
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
+  const [docked, setDocked] = useState(false)
   const startedAt = useRef<number | null>(null)
   const pausedAt = useRef(0)
-  const notifiedStep = useRef(-1)
   const activeStepRef = useRef<HTMLLIElement>(null)
   const initialFocusDone = useRef(false)
+  const timerRef = useRef<HTMLDivElement>(null)
 
   const total = recipe.steps.at(-1)?.end ?? recipe.steps.at(-1)?.start ?? 0
   const activeIndex = recipe.steps.findLastIndex((step) => elapsed >= step.start)
@@ -32,9 +37,38 @@ export function Timeline({
   const expanded = focused || running
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setPortalTarget(document.querySelector("dialog[open]")), 0)
-    return () => window.clearTimeout(timer)
-  }, [])
+    let observer: IntersectionObserver | undefined
+    const setup = window.setTimeout(() => {
+      const scroller = scrollContainerRef.current
+      const dock = dockRef.current
+      const dialog = scroller?.closest("dialog")
+      if (!scroller || !dock || !dialog) return
+      setPortalTarget(dialog)
+      observer = new IntersectionObserver(([entry]) => {
+        const nextDocked = entry.isIntersecting && entry.intersectionRatio >= 0.6
+        setDocked(nextDocked)
+        setPortalTarget(nextDocked ? dock : dialog)
+      }, { root: scroller, threshold: [0, 0.6, 1] })
+      observer.observe(dock)
+    }, 0)
+    return () => {
+      window.clearTimeout(setup)
+      observer?.disconnect()
+    }
+  }, [dockRef, scrollContainerRef])
+
+  useEffect(() => {
+    const dock = dockRef.current
+    const timer = timerRef.current
+    if (!dock || !timer) return
+    const updateDockSize = () => {
+      dock.style.minHeight = `${timer.getBoundingClientRect().height + 32}px`
+    }
+    updateDockSize()
+    const observer = new ResizeObserver(updateDockSize)
+    observer.observe(timer)
+    return () => observer.disconnect()
+  }, [dockRef, docked, expanded, portalTarget])
 
   useEffect(() => {
     onTimerStatusChange(completed ? "completed" : running ? "running" : elapsed > 0 ? "paused" : "idle")
@@ -75,7 +109,6 @@ export function Timeline({
     setElapsed(0)
     pausedAt.current = 0
     startedAt.current = null
-    notifiedStep.current = -1
     initialFocusDone.current = false
   }
 
@@ -83,7 +116,8 @@ export function Timeline({
 
   const timer = (
     <div
-      className={`glass-strong absolute bottom-6 left-1/2 z-[100] flex ${expanded ? "w-[calc(100%-2rem)] max-w-[368px] -translate-x-1/2 gap-4 rounded-3xl p-5" : "w-[calc(100%-2rem)] max-w-[368px] -translate-x-1/2 gap-2 rounded-2xl p-3"} flex-col pb-[calc(0.75rem+env(safe-area-inset-bottom))] transition-shadow ${
+      ref={timerRef}
+      className={`glass-strong z-[100] flex ${docked ? "relative w-full" : "absolute bottom-6 left-1/2 w-[calc(100%-2rem)] max-w-[368px] -translate-x-1/2"} ${expanded ? "gap-4 rounded-3xl p-5" : "gap-2 rounded-2xl p-3"} flex-col pb-[calc(0.75rem+env(safe-area-inset-bottom))] transition-[box-shadow,transform] ${
         running ? "animate-pulse-glow" : "glow-accent"
       }`}
     >
@@ -160,7 +194,6 @@ export function Timeline({
           )
         })}
       </ol>
-      <div aria-hidden="true" className={expanded ? "h-40 shrink-0" : "h-24 shrink-0"} />
     </div>
   )
 }

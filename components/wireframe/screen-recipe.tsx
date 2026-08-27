@@ -2,7 +2,7 @@
 
 import { Bookmark, Check, ChevronRight, Ellipsis, Heart, X } from "lucide-react"
 import Image from "next/image"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, type RefObject } from "react"
 import { METHOD_LABEL, type RecipeView } from "@/lib/domain"
 import { formatTemp, mmss, ratio, totalSeconds } from "@/lib/format"
 import { Timeline } from "./timeline"
@@ -58,6 +58,7 @@ export function ScreenRecipe({
   recipe,
   mode,
   timerStatus,
+  scrollContainerRef,
   tempUnit,
   onToggleUnit,
   onOpenGrinder,
@@ -74,6 +75,7 @@ export function ScreenRecipe({
   recipe: RecipeView
   mode: RecipeMode
   timerStatus: TimerStatus
+  scrollContainerRef: RefObject<HTMLDivElement | null>
   tempUnit: "C" | "F"
   onToggleUnit: (unit: "C" | "F") => void
   onOpenGrinder: () => void
@@ -90,6 +92,7 @@ export function ScreenRecipe({
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const timerDockRef = useRef<HTMLDivElement>(null)
   const preparationMode = mode === "prepare"
 
   useEffect(() => {
@@ -112,8 +115,11 @@ export function ScreenRecipe({
   }, [menuOpen])
 
   return (
-    <div className={`flex min-h-full flex-col pb-40 ${preparationMode ? "recipe-preparation" : ""}`}>
-      <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between bg-background/90 px-4 backdrop-blur-xl" aria-label="Acciones de receta">
+    <div className={`flex min-h-full flex-col pb-4 ${preparationMode ? "recipe-preparation" : ""}`}>
+      <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between bg-background/90 px-4 pt-2 backdrop-blur-xl" aria-label="Acciones de receta">
+        <span data-drag-handle className="absolute inset-x-14 top-0 flex h-8 items-start justify-center pt-2 [touch-action:none]" aria-hidden="true">
+          <span className="h-1.5 w-12 rounded-full bg-muted-foreground/40" />
+        </span>
         <button data-no-drag type="button" onPointerDown={(event) => event.stopPropagation()} onClick={onRequestClose} aria-label="Cerrar receta" className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-secondary">
           <X className="h-5 w-5" aria-hidden="true" />
         </button>
@@ -135,9 +141,6 @@ export function ScreenRecipe({
           )}
         </div>
       </header>
-      <div data-drag-handle className="pointer-events-none absolute inset-x-0 top-0 z-40 flex h-11 items-center justify-center" aria-hidden="true">
-        <span className="pointer-events-auto h-1.5 w-12 rounded-full bg-muted-foreground/40 [touch-action:none]" />
-      </div>
       {/* Hero con imagen y overlay */}
       <div className="relative h-64 w-full shrink-0 overflow-hidden">
         <Image
@@ -248,7 +251,7 @@ export function ScreenRecipe({
 
       <section className={`flex flex-col gap-3 ${preparationMode ? "min-h-0 flex-1 px-4 pt-5" : "p-4 pt-0"}`} aria-label={preparationMode ? "Preparar receta" : "Tiempo"}>
         {preparationMode ? <div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Tiempo</p><h1 className="mt-1 font-serif text-2xl font-extrabold leading-tight text-foreground">{recipe.name}</h1></div> : <SectionTitle>Tiempo</SectionTitle>}
-        <Timeline recipe={recipe} focused={preparationMode} onTimerStatusChange={onTimerStatusChange} />
+        <Timeline recipe={recipe} focused={preparationMode} scrollContainerRef={scrollContainerRef} dockRef={timerDockRef} onTimerStatusChange={onTimerStatusChange} />
       </section>
 
       <section className="flex flex-col gap-3 p-4 pt-0">
@@ -258,6 +261,7 @@ export function ScreenRecipe({
           <span className="rounded-full bg-secondary px-4 py-2 text-sm font-medium text-foreground">{saved ? "Guardada" : "No guardada"}</span>
         </div>
       </section>
+      <div ref={timerDockRef} data-timer-dock className="mx-4 min-h-24 shrink-0 pb-6 pt-2" aria-label="Controles del temporizador" />
     </div>
   )
 }

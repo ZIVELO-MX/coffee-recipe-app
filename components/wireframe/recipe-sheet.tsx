@@ -6,6 +6,7 @@ import { RecipeExperience, type RecipeMode, type TimerStatus } from "./recipe-ex
 
 export function RecipeSheet({ recipe, preferences, onClose }: { recipe: RecipeView; preferences: UserPreferences; onClose: () => void }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const dragStart = useRef<{ y: number; time: number } | null>(null)
   const closeTimer = useRef<number | null>(null)
   const [mode, setMode] = useState<RecipeMode>("consult")
@@ -27,17 +28,17 @@ export function RecipeSheet({ recipe, preferences, onClose }: { recipe: RecipeVi
     setClosing(true)
     dialogRef.current?.close()
     closeTimer.current = window.setTimeout(onClose, 120)
-  }, [mode, onClose, timerStatus])
+  }, [onClose])
 
   function startDrag(event: React.PointerEvent<HTMLDivElement>) {
-    if (timerStatus === "running" || !(event.target instanceof Element) || (!event.target.closest("[data-drag-handle]") && !event.target.closest("header")) || event.target.closest("button, [data-no-drag]")) return
+    if (!(event.target instanceof Element) || (!event.target.closest("[data-drag-handle]") && !event.target.closest("header")) || event.target.closest("button, [data-no-drag]")) return
     dragStart.current = { y: event.clientY, time: performance.now() }
     setDragging(true)
     event.currentTarget.setPointerCapture(event.pointerId)
   }
 
   function moveDrag(event: React.PointerEvent<HTMLDivElement>) {
-    if (!dragStart.current || timerStatus === "running") return
+    if (!dragStart.current) return
     setDragOffset(Math.max(0, event.clientY - dragStart.current.y))
   }
 
@@ -61,6 +62,8 @@ export function RecipeSheet({ recipe, preferences, onClose }: { recipe: RecipeVi
       className={`recipe-dialog m-0 mt-auto h-[96dvh] w-full max-w-[400px] overflow-hidden border-0 bg-background p-0 text-foreground backdrop:bg-black/65 sm:mb-4 sm:h-[calc(100dvh-2rem)] sm:rounded-[2.5rem] ${mode === "prepare" ? "recipe-dialog-prepare" : ""} ${closing ? "recipe-dialog-closing" : ""}`}
     >
       <div
+        ref={scrollContainerRef}
+        data-recipe-scroll
         className="relative flex h-full min-h-0 flex-col overflow-y-auto overscroll-contain [touch-action:pan-y]"
         style={{ transform: `translateY(${dragOffset}px)`, transition: dragging ? "none" : "transform 220ms cubic-bezier(0.22, 1, 0.36, 1)" }}
         onPointerDown={startDrag}
@@ -73,6 +76,7 @@ export function RecipeSheet({ recipe, preferences, onClose }: { recipe: RecipeVi
           initialPreferences={preferences}
           mode={mode}
           timerStatus={timerStatus}
+          scrollContainerRef={scrollContainerRef}
           onTimerStatusChange={(status) => {
             setTimerStatus(status)
             if (status === "running") setMode("prepare")

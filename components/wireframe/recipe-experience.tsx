@@ -1,7 +1,7 @@
 "use client"
 
 import { useAuth, useClerk } from "@clerk/nextjs"
-import { useEffect, useOptimistic, useState, useTransition } from "react"
+import { useEffect, useOptimistic, useState, useTransition, type RefObject } from "react"
 import { setRecipeLiked, setRecipeSaved, updatePreferences } from "@/app/actions"
 import type { RecipeView, UserPreferences } from "@/lib/domain"
 import { GrinderSelector, type GrinderOption } from "./grinder-selector"
@@ -14,11 +14,12 @@ type PendingIntent = { recipeId: string; kind: "saved" | "liked"; value: boolean
 export type RecipeMode = "consult" | "prepare"
 export type TimerStatus = "idle" | "running" | "paused" | "completed"
 
-export function RecipeExperience({ recipe, initialPreferences, mode, timerStatus, onTimerStatusChange, onRequestClose }: {
+export function RecipeExperience({ recipe, initialPreferences, mode, timerStatus, scrollContainerRef, onTimerStatusChange, onRequestClose }: {
   recipe: RecipeView
   initialPreferences: UserPreferences
   mode: RecipeMode
   timerStatus: TimerStatus
+  scrollContainerRef: RefObject<HTMLDivElement | null>
   onTimerStatusChange: (status: TimerStatus) => void
   onRequestClose: () => void
 }) {
@@ -131,6 +132,7 @@ export function RecipeExperience({ recipe, initialPreferences, mode, timerStatus
         recipe={recipe}
         mode={mode}
         timerStatus={timerStatus}
+        scrollContainerRef={scrollContainerRef}
         tempUnit={preferences.temperature_unit}
         onToggleUnit={(temperature_unit) => savePreferences({ ...preferences, temperature_unit })}
         onOpenGrinder={() => setGrinderOpen(true)}

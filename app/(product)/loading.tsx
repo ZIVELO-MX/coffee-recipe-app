@@ -1,3 +1,3 @@
 export default function ProductLoading() {
-  return <main className="flex min-h-screen items-center justify-center bg-background"><p className="text-sm text-muted-foreground">Cargando café…</p></main>
+  return <div className="flex min-h-full items-center justify-center bg-background pb-24"><p className="text-sm text-muted-foreground">Cargando café…</p></div>
 }

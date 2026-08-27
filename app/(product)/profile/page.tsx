@@ -1,6 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server"
-import { ProductFrame } from "@/components/wireframe/product-frame"
 import { ProfileClient } from "@/components/wireframe/profile-client"
+import { TabPageTransition } from "@/components/wireframe/tab-page-transition"
 import { getUserPreferences } from "@/lib/preferences"
 import type { ViewerUser } from "@/lib/domain"
 
@@ -12,5 +12,5 @@ export default async function ProfilePage() {
     email: clerkUser.primaryEmailAddress?.emailAddress ?? "",
     avatarId: "espresso",
   } : { name: "Invitado", email: "", avatarId: "espresso", guest: true }
-  return <ProductFrame active="perfil"><ProfileClient user={user} initialPreferences={preferences} /></ProductFrame>
+  return <TabPageTransition><ProfileClient user={user} initialPreferences={preferences} /></TabPageTransition>
 }

@@ -203,6 +203,38 @@
   }
 }
 
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-old(.tab-forward) {
+  --tab-slide: -56px;
+  animation: tab-out 180ms ease-in both;
+}
+
+::view-transition-new(.tab-forward) {
+  --tab-slide: 56px;
+  animation: tab-in 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+::view-transition-old(.tab-back) {
+  --tab-slide: 56px;
+  animation: tab-out 180ms ease-in both;
+}
+
+::view-transition-new(.tab-back) {
+  --tab-slide: -56px;
+  animation: tab-in 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes tab-out {
+  to { opacity: 0; translate: var(--tab-slide) 0; }
+}
+
+@keyframes tab-in {
+  from { opacity: 0; translate: var(--tab-slide) 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-rise,
   .animate-pulse-glow {
@@ -214,5 +246,12 @@
   .recipe-dialog-closing {
     animation: none;
     transition: none;
+  }
+
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
   }
 }
