@@ -24,10 +24,13 @@ export function RecipeSheet({ recipe, preferences, onClose }: { recipe: RecipeVi
   }, [])
 
   const requestDismiss = useCallback(() => {
+    if (closing || closeTimer.current) return
     setClosing(true)
-    dialogRef.current?.close()
-    closeTimer.current = window.setTimeout(onClose, 120)
-  }, [onClose])
+    closeTimer.current = window.setTimeout(() => {
+      dialogRef.current?.close()
+      onClose()
+    }, 220)
+  }, [closing, onClose])
 
   function startDrag(event: React.PointerEvent<HTMLDivElement>) {
     if (!(event.target instanceof Element) || (!event.target.closest("[data-drag-handle]") && !event.target.closest("header")) || event.target.closest("button, [data-no-drag]")) return
