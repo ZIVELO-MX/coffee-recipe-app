@@ -256,6 +256,7 @@ export function ScreenRecipe({
           <span className="rounded-full bg-secondary px-4 py-2 text-sm font-medium text-foreground">{saved ? "Guardada" : "No guardada"}</span>
         </div>
       </section>
+      <div aria-hidden="true" className="min-h-24 shrink-0 pb-6 pt-2" />
     </div>
   )
 }
