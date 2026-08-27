@@ -90,7 +90,6 @@ export function ScreenRecipe({
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
-  const timerDockRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!menuOpen) return
     function handlePointerDown(event: PointerEvent) {
@@ -247,7 +246,7 @@ export function ScreenRecipe({
 
       <section className="flex flex-col gap-3 p-4 pt-0" aria-label="Tiempo">
         <SectionTitle>Tiempo</SectionTitle>
-        <Timeline recipe={recipe} scrollContainerRef={scrollContainerRef} dockRef={timerDockRef} onTimerStatusChange={onTimerStatusChange} />
+        <Timeline recipe={recipe} scrollContainerRef={scrollContainerRef} onTimerStatusChange={onTimerStatusChange} />
       </section>
 
       <section className="flex flex-col gap-3 p-4 pt-0">
@@ -257,7 +256,6 @@ export function ScreenRecipe({
           <span className="rounded-full bg-secondary px-4 py-2 text-sm font-medium text-foreground">{saved ? "Guardada" : "No guardada"}</span>
         </div>
       </section>
-      <div ref={timerDockRef} data-timer-dock className="mx-4 min-h-24 shrink-0 pb-6 pt-2" aria-label="Controles del temporizador" />
     </div>
   )
 }
