@@ -67,7 +67,7 @@ export function RecipeSheet({ recipe, preferences, onClose }: { recipe: RecipeVi
         ref={scrollContainerRef}
         data-recipe-scroll
         className="relative flex h-full min-h-0 flex-col overflow-y-auto overscroll-contain [touch-action:pan-y]"
-        style={{ transform: `translateY(${dragOffset}px)`, transition: dragging ? "none" : "transform 220ms cubic-bezier(0.22, 1, 0.36, 1)" }}
+        style={{ transform: dragOffset ? `translateY(${dragOffset}px)` : undefined, transition: dragging ? "none" : "transform 220ms cubic-bezier(0.22, 1, 0.36, 1)" }}
         onPointerDown={startDrag}
         onPointerMove={moveDrag}
         onPointerUp={endDrag}
