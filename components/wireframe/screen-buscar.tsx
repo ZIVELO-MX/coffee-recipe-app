@@ -2,7 +2,7 @@
 
 import { Search } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
-import { type FormEvent, useEffect, useState, useTransition } from "react"
+import { type FormEvent, useState, useTransition } from "react"
 import type { RecipeFilters, RecipePage } from "@/lib/domain"
 import { RecipeCard } from "./recipe-card"
 import { RecipeCardsSkeleton } from "./recipe-card-skeleton"
@@ -10,6 +10,21 @@ import { FilterBar } from "./filter-bar"
 import { FILTER_GROUPS, FilterSheet, type FilterGroup } from "./filter-sheet"
 
 const FILTER_KEYS: FilterGroup["key"][] = ["method", "coffee", "water", "temperature", "duration"]
+type FilterSelection = Record<FilterGroup["key"], string[]>
+
+function selectionFromFilters(filters: RecipeFilters): FilterSelection {
+  return {
+    method: [...filters.method],
+    coffee: [...filters.coffee],
+    water: [...filters.water],
+    temperature: [...filters.temperature],
+    duration: [...filters.duration],
+  }
+}
+
+function emptyFilterSelection(): FilterSelection {
+  return { method: [], coffee: [], water: [], temperature: [], duration: [] }
+}
 
 export function ScreenBuscar({ result, filters }: { result: RecipePage; filters: RecipeFilters }) {
   const pathname = usePathname()
@@ -17,14 +32,10 @@ export function ScreenBuscar({ result, filters }: { result: RecipePage; filters:
   const [sheetOpen, setSheetOpen] = useState(false)
   const [pending, startTransition] = useTransition()
 
-  const active = Object.fromEntries(FILTER_KEYS.map((key) => [key, filters[key]])) as Record<FilterGroup["key"], string[]>
+  const active = selectionFromFilters(filters)
   const labels = new Map(FILTER_GROUPS.flatMap((group) => group.options.map((option) => [`${group.key}:${option.value}`, option.label])))
   const chips = FILTER_KEYS.flatMap((key) => active[key].map((value) => `${key}:${value}`))
-  const [draftFilters, setDraftFilters] = useState(active)
-
-  useEffect(() => {
-    if (sheetOpen) setDraftFilters(active)
-  }, [sheetOpen, filters])
+  const [draftFilters, setDraftFilters] = useState<FilterSelection>(() => selectionFromFilters(filters))
 
   function navigate(mutator: (params: URLSearchParams) => void) {
     const params = new URLSearchParams()
@@ -65,7 +76,12 @@ export function ScreenBuscar({ result, filters }: { result: RecipePage; filters:
   }
 
   function clearDraftFilters() {
-    setDraftFilters((current) => Object.fromEntries(FILTER_KEYS.map((key) => [key, []])) as typeof current)
+    setDraftFilters(emptyFilterSelection())
+  }
+
+  function openFilterSheet() {
+    setDraftFilters(selectionFromFilters(filters))
+    setSheetOpen(true)
   }
 
   function applyDraftFilters() {
@@ -109,7 +125,7 @@ export function ScreenBuscar({ result, filters }: { result: RecipePage; filters:
           const [key, value] = chip.split(":") as [FilterGroup["key"], string]
           toggleFilter(key, value)
         }}
-        onMore={() => setSheetOpen(true)}
+        onMore={openFilterSheet}
       />
 
       <div className="flex flex-col gap-4" aria-live="polite">

@@ -56,6 +56,11 @@ de una instancia Clerk de desarrollo y, para el flujo autenticado,
 `CLERK_E2E_USER_EMAIL`. En GitHub deben configurarse como secretos junto con
 `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` y `CLERK_SECRET_KEY`.
 
-Para Vercel configura `MONGODB_URI`, `MONGODB_DB`, las claves de la instancia
-Clerk de producción y `RECIPE_ADMIN_API_TOKEN`. Después registra el dominio de
-Vercel dentro de Clerk y ejecuta índices/seed una vez contra la base productiva.
+Producción debe usar una base MongoDB y una instancia Clerk separadas de
+desarrollo. Configura `MONGODB_URI`, `MONGODB_DB`, las claves de Clerk,
+`RECIPE_ADMIN_API_TOKEN` y las rutas públicas de autenticación documentadas en
+`.env.example`. Ejecuta índices y seed una sola vez contra la base productiva.
+
+Después de que CI esté completamente verde, conecta el repositorio en Vercel,
+registra el dominio resultante dentro de Clerk y realiza el smoke test de
+producción.

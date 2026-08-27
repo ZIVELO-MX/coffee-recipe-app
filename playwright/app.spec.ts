@@ -20,12 +20,13 @@ test("search filters are represented in the URL", async ({ page }) => {
   await page.goto("/recipes")
   await page.getByRole("button", { name: "Filtros" }).click()
   await page.getByRole("button", { name: "V60" }).click()
+  await expect(page).toHaveURL(/\/recipes$/)
   await page.getByRole("button", { name: "Ver resultados" }).click()
   await expect(page).toHaveURL(/method=v60/)
   await expect(page.getByRole("link", { name: /V60 clásico balanceado/ })).toBeVisible()
 })
 
-test("the recipe sheet changes to preparation without navigating", async ({ page }) => {
+test("the recipe timer starts without changing the recipe layout or route", async ({ page }) => {
   if (process.env.CLERK_SECRET_KEY) await setupClerkTestingToken({ page })
   await page.goto("/recipes")
   await page.getByRole("link", { name: /Moka mañanera/ }).click()
@@ -34,14 +35,15 @@ test("the recipe sheet changes to preparation without navigating", async ({ page
   await expect(dialog.getByRole("menu", { name: "Acciones de receta" })).toBeVisible()
   await dialog.getByRole("button", { name: "Más acciones" }).click()
   await page.getByRole("button", { name: "Iniciar", exact: true }).click()
+  await expect(page).toHaveURL(/\/recipes$/)
   await expect(dialog.getByRole("heading", { name: "Moka mañanera" })).toBeVisible()
-  await expect(dialog.getByRole("button", { name: "Cerrar receta" })).toHaveCount(0)
+  await expect(dialog.getByRole("button", { name: "Cerrar receta" })).toBeVisible()
+  await expect(dialog.getByRole("button", { name: "Más acciones" })).toBeVisible()
   await expect(page.getByRole("button", { name: "Pausar" })).toBeVisible()
   await page.getByRole("button", { name: "Pausar" }).click()
-  await expect(dialog.getByRole("button", { name: "Contraer receta" })).toBeVisible()
-  await dialog.getByRole("button", { name: "Contraer receta" }).click()
-  await expect(dialog.getByRole("button", { name: "Cerrar receta" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "Iniciar", exact: true })).toBeVisible()
   await dialog.getByRole("button", { name: "Cerrar receta" }).click()
+  await expect(dialog).not.toBeVisible()
 })
 
 test("an authenticated user can persist a saved recipe", async ({ page }) => {
