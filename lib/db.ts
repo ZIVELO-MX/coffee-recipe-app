@@ -1,6 +1,6 @@
 import { MongoClient, type Db } from "mongodb"
+import { getMongoUri } from "@/lib/mongo-config"
 
-const uri = process.env.MONGODB_URI
 const dbName = process.env.MONGODB_DB ?? "coffee_recipe_app"
 
 declare global {
@@ -8,8 +8,7 @@ declare global {
 }
 
 function getClient(): MongoClient {
-  if (!uri) throw new Error("MONGODB_URI is not configured")
-  globalThis.coffeeMongoClient ??= new MongoClient(uri, {
+  globalThis.coffeeMongoClient ??= new MongoClient(getMongoUri(process.env.MONGODB_URI), {
     maxPoolSize: 10,
     serverSelectionTimeoutMS: 5000,
   })

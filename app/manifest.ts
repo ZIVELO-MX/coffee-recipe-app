@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next"
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Cafeína — Recetas de café",
-    short_name: "Cafeína",
+    name: "Koda Brew — Recetas de café",
+    short_name: "Koda Brew",
     description: "Descubre, guarda y prepara recetas de café paso a paso.",
     start_url: "/recipes",
     scope: "/",

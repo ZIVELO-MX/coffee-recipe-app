@@ -7,7 +7,7 @@ import { getRecipeById } from "@/lib/recipes"
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const recipe = await getRecipeById((await params).id)
-  return recipe ? { title: `${recipe.name} — Cafeína`, description: `Receta de ${recipe.author} para ${recipe.method}.` } : { title: "Receta no encontrada — Cafeína" }
+  return recipe ? { title: recipe.name, description: `Receta de ${recipe.author} para ${recipe.method}.` } : { title: "Receta no encontrada" }
 }
 
 export default async function RecipePage({ params }: { params: Promise<{ id: string }> }) {
