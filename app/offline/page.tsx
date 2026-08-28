@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { RefreshCw, WifiOff } from "lucide-react"
+import Link from "next/link"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 
 export const metadata: Metadata = {
@@ -19,9 +20,9 @@ export default function OfflinePage() {
           <EmptyDescription>Conéctate a internet para volver a explorar tus recetas en Koda Brew.</EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
-          <a href="/recipes" className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+          <Link href="/recipes" className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
             <RefreshCw className="size-4" aria-hidden="true" />Intentar de nuevo
-          </a>
+          </Link>
         </EmptyContent>
       </Empty>
     </main>

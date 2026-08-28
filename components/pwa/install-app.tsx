@@ -14,13 +14,10 @@ function isStandalone() {
 
 export function InstallApp() {
   const [prompt, setPrompt] = useState<InstallPromptEvent | null>(null)
-  const [installed, setInstalled] = useState(false)
-  const [isIos, setIsIos] = useState(false)
+  const [installed, setInstalled] = useState(() => typeof window !== "undefined" && isStandalone())
+  const [isIos] = useState(() => typeof window !== "undefined" && /iphone|ipad|ipod/i.test(navigator.userAgent))
 
   useEffect(() => {
-    setInstalled(isStandalone())
-    setIsIos(/iphone|ipad|ipod/i.test(navigator.userAgent))
-
     const capturePrompt = (event: Event) => {
       event.preventDefault()
       setPrompt(event as InstallPromptEvent)
