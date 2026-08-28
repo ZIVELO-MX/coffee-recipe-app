@@ -22,7 +22,7 @@ export function BottomNav({
   return (
     <nav
       aria-label="Navegación principal"
-      className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex justify-center pb-5"
+      className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex justify-center [padding-bottom:max(1.25rem,env(safe-area-inset-bottom))]"
     >
       <div className="glass-strong pointer-events-auto relative grid w-[calc(100vw-2rem)] max-w-[352px] grid-cols-3 rounded-full p-1.5">
         <span

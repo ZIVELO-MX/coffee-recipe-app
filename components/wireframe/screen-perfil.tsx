@@ -5,6 +5,7 @@ import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs"
 import Image from "next/image"
 import { getAvatar } from "@/lib/avatars"
 import type { ViewerUser } from "@/lib/domain"
+import { InstallApp } from "@/components/pwa/install-app"
 
 export function ScreenPerfil({
   user,
@@ -87,6 +88,13 @@ export function ScreenPerfil({
               ))}
             </div>
           </button>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Aplicación</p>
+        <div className="overflow-hidden rounded-3xl border border-border bg-card">
+          <InstallApp />
         </div>
       </section>
 
