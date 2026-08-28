@@ -10,10 +10,29 @@ describe("Koda Brew branding", () => {
     const appManifest = manifest()
     expect(appManifest.name).toContain("Koda Brew")
     expect(appManifest.short_name).toBe("Koda Brew")
+    expect(appManifest.id).toBe("/")
+    expect(appManifest.lang).toBe("es-MX")
+    expect(appManifest.orientation).toBe("portrait-primary")
+    expect(appManifest.shortcuts).toEqual(expect.arrayContaining([
+      expect.objectContaining({ url: "/recipes" }),
+      expect.objectContaining({ url: "/saved" }),
+      expect.objectContaining({ url: "/profile" }),
+    ]))
     expect(appManifest.icons).toEqual(expect.arrayContaining([
       expect.objectContaining({ src: "/pwa-icon-192.png" }),
       expect.objectContaining({ src: "/pwa-icon-512.png" }),
     ]))
+  })
+
+  it("ships branded social images for the app and recipes", () => {
+    const files = [
+      "app/opengraph-image.tsx",
+      "app/twitter-image.tsx",
+      "app/(product)/recipes/[id]/opengraph-image.tsx",
+      "app/(product)/recipes/[id]/twitter-image.tsx",
+    ]
+    for (const file of files) expect(readFileSync(resolve(root, file), "utf8").length).toBeGreaterThan(20)
+    expect(readFileSync(resolve(root, "components/brand/social-image.tsx"), "utf8")).toContain("Koda Brew")
   })
 
   it("does not ship the former product name in user-facing metadata", () => {

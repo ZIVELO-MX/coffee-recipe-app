@@ -1,6 +1,6 @@
 "use client"
 
-import { Bookmark, Check, ChevronRight, Ellipsis, Heart, X } from "lucide-react"
+import { Bookmark, Check, ChevronRight, Ellipsis, Heart, Share2, X } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useRef, useState, type RefObject } from "react"
 import { METHOD_LABEL, type RecipeView } from "@/lib/domain"
@@ -88,6 +88,7 @@ export function ScreenRecipe({
   onRequestClose: () => void
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [shareStatus, setShareStatus] = useState("")
   const menuRef = useRef<HTMLDivElement>(null)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
   useEffect(() => {
@@ -109,9 +110,27 @@ export function ScreenRecipe({
     }
   }, [menuOpen])
 
+  async function shareRecipe() {
+    const url = new URL(`/recipes/${recipe._id}`, window.location.origin).toString()
+    const data = { title: `${recipe.name} — Koda Brew`, text: `Receta de ${recipe.author} en Koda Brew`, url }
+    setShareStatus("")
+    try {
+      if (navigator.share) {
+        await navigator.share(data)
+        setShareStatus("Receta compartida")
+        return
+      }
+      await navigator.clipboard.writeText(url)
+      setShareStatus("Enlace copiado")
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return
+      setShareStatus("No se pudo compartir el enlace")
+    }
+  }
+
   return (
     <div className="flex min-h-full flex-col pb-4">
-      <div className="sticky top-0 z-30 h-16 shrink-0 bg-background/90 pt-2 backdrop-blur-xl relative">
+      <div className="sticky top-0 z-30 h-[calc(4rem+env(safe-area-inset-top))] shrink-0 bg-background/90 pt-[calc(0.5rem+env(safe-area-inset-top))] backdrop-blur-xl relative sm:h-16 sm:pt-2">
         <header className="flex h-full items-center justify-between px-4" aria-label="Acciones de receta">
         <button data-no-drag type="button" onPointerDown={(event) => event.stopPropagation()} onClick={onRequestClose} aria-label="Cerrar receta" className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-secondary">
           <X className="h-5 w-5" aria-hidden="true" />
@@ -130,6 +149,11 @@ export function ScreenRecipe({
                 <span className="inline-flex items-center gap-2"><Bookmark className={`h-4 w-4 text-primary ${saved ? "fill-primary" : ""}`} aria-hidden="true" />{saved ? "Quitar guardado" : "Guardar"}</span>
                 {saved && <Check className="h-4 w-4 text-primary" aria-hidden="true" />}
               </button>
+              <button data-no-drag role="menuitem" type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => void shareRecipe()} className="flex items-center gap-2 rounded-xl px-3 py-3 text-left text-sm hover:bg-secondary">
+                <Share2 className="h-4 w-4 text-primary" aria-hidden="true" />
+                Compartir
+              </button>
+              {shareStatus && <p role="status" aria-live="polite" className="px-3 pb-1 text-xs text-muted-foreground">{shareStatus}</p>}
             </div>
           )}
         </div>

@@ -5,10 +5,21 @@ import {
   type RecipeFilters,
   type RecipePage,
   type RecipeView,
+  METHOD_LABEL,
   totalSeconds,
 } from "@/lib/domain"
 
 type SearchInput = URLSearchParams | Record<string, string | string[] | undefined>
+
+export type RecipeShareData = {
+  id: string
+  name: string
+  author: string
+  method: string
+  coffeeGrams: number
+  waterMilliliters: number
+  totalSeconds: number
+}
 
 function values(input: SearchInput, key: string): string[] {
   if (input instanceof URLSearchParams) return input.getAll(key)
@@ -140,6 +151,24 @@ export async function getRecipeById(id: string, userId?: string | null): Promise
   const recipe = await (await getDatabase()).collection("recipes").findOne({ _id: new ObjectId(id) })
   if (!recipe) return null
   return (await mergeViewerState([serializeRecipe(recipe)], userId))[0]
+}
+
+export async function getRecipeShareData(id: string): Promise<RecipeShareData | null> {
+  if (!ObjectId.isValid(id)) return null
+  const recipe = await (await getDatabase()).collection("recipes").findOne(
+    { _id: new ObjectId(id) },
+    { projection: { name: 1, author: 1, method: 1, coffee_g: 1, water_ml: 1, steps: 1, total_seconds: 1 } },
+  )
+  if (!recipe) return null
+  return {
+    id: recipe._id.toString(),
+    name: recipe.name,
+    author: recipe.author,
+    method: METHOD_LABEL[recipe.method as keyof typeof METHOD_LABEL] ?? recipe.method,
+    coffeeGrams: recipe.coffee_g,
+    waterMilliliters: recipe.water_ml,
+    totalSeconds: recipe.total_seconds ?? totalSeconds(recipe.steps ?? []),
+  }
 }
 
 export async function getSavedRecipes(userId: string): Promise<RecipeView[]> {

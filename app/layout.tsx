@@ -3,6 +3,7 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono, Bricolage_Grotesque } from 'next/font/google'
 import './globals.css'
+import { ServiceWorkerRegistration } from '@/components/pwa/service-worker-registration'
 
 const geistSans = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
 const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' })
@@ -20,6 +21,19 @@ export const metadata: Metadata = {
     template: '%s — Koda Brew',
   },
   description: 'Descubre, guarda y prepara recetas de café paso a paso.',
+  openGraph: {
+    type: 'website',
+    locale: 'es_MX',
+    url: '/',
+    siteName: 'Koda Brew',
+    title: 'Koda Brew — Recetas de café de especialidad',
+    description: 'Descubre, guarda y prepara recetas de café paso a paso.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Koda Brew — Recetas de café de especialidad',
+    description: 'Descubre, guarda y prepara recetas de café paso a paso.',
+  },
   icons: {
     icon: [
       {
@@ -67,6 +81,7 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <ClerkProvider>
           {children}
+          <ServiceWorkerRegistration />
           {process.env.NODE_ENV === 'production' && <Analytics />}
         </ClerkProvider>
       </body>
