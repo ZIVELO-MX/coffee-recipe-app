@@ -1,4 +1,4 @@
-# Coffee Recipe App
+# Koda Brew
 
 Aplicación Next.js 16 para descubrir y ejecutar recetas de café en español.
 

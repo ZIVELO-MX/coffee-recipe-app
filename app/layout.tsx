@@ -13,10 +13,19 @@ const bricolage = Bricolage_Grotesque({
 })
 
 export const metadata: Metadata = {
-  title: 'Cafeína — Recetas de café de especialidad',
+  metadataBase: new URL('https://brew.zivelo.dev'),
+  applicationName: 'Koda Brew',
+  title: {
+    default: 'Koda Brew — Recetas de café de especialidad',
+    template: '%s — Koda Brew',
+  },
   description: 'Descubre, guarda y prepara recetas de café paso a paso.',
   icons: {
     icon: [
+      {
+        url: '/favicon.ico',
+        type: 'image/x-icon',
+      },
       {
         url: '/icon-light-32x32.png',
         media: '(prefers-color-scheme: light)',
@@ -35,7 +44,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Cafeína',
+    title: 'Koda Brew',
   },
 }
 

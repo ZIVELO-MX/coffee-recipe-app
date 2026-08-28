@@ -1,4 +1,4 @@
-# Coffee Recipe App — MVP Product & Implementation Plan
+# Koda Brew — MVP Product & Implementation Plan
 
 > **Execution status (2026-08-25):** The product routes now render from MongoDB,
 > Clerk-backed likes/saves/preferences are implemented, and the original five
