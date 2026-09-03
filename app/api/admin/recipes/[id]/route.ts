@@ -2,6 +2,12 @@ import { ObjectId } from "mongodb"
 import { NextRequest, NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
 import { getDatabase } from "@/lib/db"
+import {
+  BrewmarkUnavailableError,
+  GrinderNotFoundError,
+  InvalidGrindSettingError,
+  validateRecipeGrind,
+} from "@/lib/brewmark"
 import { recipeInputSchema, validateTimeline } from "@/lib/domain"
 import { jsonError } from "@/lib/http"
 import { requireRecipeAdmin } from "@/lib/admin"
@@ -14,6 +20,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     const parsed = recipeInputSchema.safeParse(await request.json())
     if (!parsed.success) return jsonError("invalid_recipe", "La receta no es válida.", 400)
     validateTimeline(parsed.data.steps)
+    await validateRecipeGrind(parsed.data.grind)
     const result = await (await getDatabase()).collection("recipes").updateOne(
       { _id: new ObjectId(id) },
       { $set: { ...parsed.data, updated_at: new Date() } },
@@ -24,6 +31,12 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     return NextResponse.json({ updated: true })
   } catch (error) {
     if (error instanceof Response) return error
+    if (error instanceof GrinderNotFoundError || error instanceof InvalidGrindSettingError) {
+      return jsonError("invalid_recipe_grind", "La molienda original no es válida para ese molino.", 400)
+    }
+    if (error instanceof BrewmarkUnavailableError) {
+      return jsonError("brewmark_unavailable", "No se pudo validar la molienda con BrewMark.", 503)
+    }
     console.error("admin.recipe_update_failed", { id, error })
     return jsonError("recipe_update_failed", "No se pudo actualizar la receta.", 400)
   }

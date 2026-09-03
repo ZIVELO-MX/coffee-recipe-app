@@ -1,8 +1,31 @@
 import "@/scripts/load-env"
 import { randomUUID } from "node:crypto"
 import { ObjectId } from "mongodb"
-import { afterAll, beforeAll, describe, expect, it } from "vitest"
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 import { SEED_RECIPES } from "@/scripts/seed-data"
+
+vi.mock("@/lib/brewmark", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/brewmark")>()
+  return {
+    ...actual,
+    getGrinderCatalog: vi.fn().mockResolvedValue({
+      grinders: [{
+        id: 62,
+        brand: "Baratza",
+        name: "Encore ESP",
+        minSetting: 1,
+        maxSetting: 40,
+        settingUnit: "NUMBER",
+        espressoAnchor: 3,
+        mokaAnchor: 8,
+        filterAnchor: 18,
+        frenchPressAnchor: 25,
+        coarseAnchor: 33,
+        burrType: "CONICAL",
+      }],
+    }),
+  }
+})
 
 const enabled = process.env.RUN_MONGO_INTEGRATION === "1" && Boolean(process.env.MONGODB_URI)
 const suite = enabled ? describe : describe.skip
@@ -35,14 +58,14 @@ suite("MongoDB recipe persistence", () => {
   })
 
   it("filters recipe ranges and methods", async () => {
-    const result = await getRecipePage({ q: "", method: ["v60"], coffee: [], water: ["250-350"], temperature: [], duration: [], page: 1, pageSize: 20 })
+    const result = await getRecipePage({ q: "", method: ["v60"], coffee: [], water: ["150-250"], temperature: [], duration: [], page: 1, pageSize: 20 })
     expect(result.total).toBe(1)
-    expect(result.data[0]?.name).toBe("V60 clásico balanceado")
+    expect(result.data[0]?.name).toBe("V60 Regular")
   })
 
   it("isolates saved recipes and likes by Clerk user", async () => {
     const db = await getDatabase()
-    const recipe = await db.collection("recipes").findOne({ legacy_id: "r1" })
+    const recipe = await db.collection("recipes").findOne({ legacy_id: "r6" })
     expect(recipe?._id).toBeInstanceOf(ObjectId)
     await db.collection("saved_recipes").insertOne({ clerk_user_id: "user_a", recipe_id: recipe?._id, created_at: new Date() })
     await db.collection("likes").insertMany([

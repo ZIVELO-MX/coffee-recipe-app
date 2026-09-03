@@ -3,13 +3,19 @@
 import { useAuth, useClerk } from "@clerk/nextjs"
 import { useEffect, useOptimistic, useState, useTransition, type RefObject } from "react"
 import { setRecipeLiked, setRecipeSaved, updatePreferences } from "@/app/actions"
-import type { RecipeView, UserPreferences } from "@/lib/domain"
+import type { GrindSettingView, RecipeView, UserPreferences } from "@/lib/domain"
 import { GrinderSelector, type GrinderOption } from "./grinder-selector"
 import { ScreenRecipe } from "./screen-recipe"
 
 const INTENT_KEY = "coffee-recipe-pending-intent"
-const PREFERENCES_KEY = "coffee-recipe-guest-preferences"
+const PREFERENCES_KEY = "coffee-recipe-guest-preferences:v2"
 type PendingIntent = { recipeId: string; kind: "saved" | "liked"; value: boolean }
+
+function formatGrindSetting(grind: GrindSettingView): string {
+  if (grind.setting_unit === "CLICKS") return `${grind.setting} clicks`
+  if (grind.setting_unit === "ROTATIONS") return `${grind.setting} vueltas`
+  return String(grind.setting)
+}
 
 export type TimerStatus = "idle" | "running" | "paused" | "completed"
 
@@ -30,18 +36,26 @@ export function RecipeExperience({ recipe, initialPreferences, timerStatus, scro
   const [optimisticLike, setOptimisticLike] = useOptimistic({ liked, count: likeCount }, (_, value: { liked: boolean; count: number }) => value)
   const [preferences, setPreferences] = useState(initialPreferences)
   const [grinderOpen, setGrinderOpen] = useState(false)
-  const [grindSetting, setGrindSetting] = useState("Molienda recomendada")
+  const [fetchedGrind, setFetchedGrind] = useState<GrindSettingView | null>(null)
   const [message, setMessage] = useState("")
   const [, startTransition] = useTransition()
+  const recipeGrind = recipe.grind.converted?.grinder_id === preferences.default_grinder_id
+    ? recipe.grind.converted
+    : recipe.grind.source.grinder_id === preferences.default_grinder_id
+      ? recipe.grind.source
+      : null
+  const displayGrind = fetchedGrind?.grinder_id === preferences.default_grinder_id
+    ? fetchedGrind
+    : recipeGrind ?? recipe.grind.source
 
   useEffect(() => {
     if (isSignedIn) return
-    const raw = sessionStorage.getItem(PREFERENCES_KEY)
-    if (!raw) return
     try {
+      const raw = sessionStorage.getItem(PREFERENCES_KEY)
+      if (!raw) return
       const stored = JSON.parse(raw) as UserPreferences
-      if ((stored.temperature_unit === "C" || stored.temperature_unit === "F") && /^[a-z0-9-]+$/.test(stored.default_grinder_slug)) {
-        const timeout = window.setTimeout(() => setPreferences(stored), 0)
+      if ((stored.temperature_unit === "C" || stored.temperature_unit === "F") && Number.isSafeInteger(stored.default_grinder_id) && stored.default_grinder_id > 0) {
+        const timeout = window.setTimeout(() => setPreferences({ ...stored, default_grinder_name: null }), 0)
         return () => window.clearTimeout(timeout)
       }
     } catch {
@@ -50,19 +64,25 @@ export function RecipeExperience({ recipe, initialPreferences, timerStatus, scro
   }, [isSignedIn])
 
   useEffect(() => {
+    const initialConverted = recipe.grind.converted
+    if (initialConverted?.grinder_id === preferences.default_grinder_id) return
+    if (recipe.grind.source.grinder_id === preferences.default_grinder_id) return
     const controller = new AbortController()
-    fetch(`/api/grinders/${preferences.default_grinder_slug}`, { signal: controller.signal })
-      .then((response) => response.ok ? response.json() : Promise.reject(new Error("chart unavailable")))
-      .then((chart: { methods: { key: string; setting: string }[] }) => {
-        const method = chart.methods.find((item) => item.key === recipe.grind.target)
-        setGrindSetting(method?.setting ?? "Molienda recomendada")
+    fetch(`/api/recipes/${recipe._id}?grinder=${preferences.default_grinder_id}`, { signal: controller.signal })
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error("conversion unavailable")))
+      .then((convertedRecipe: RecipeView) => {
+        const grind = convertedRecipe.grind.converted ?? convertedRecipe.grind.source
+        setFetchedGrind(grind)
+        setPreferences((current) => current.default_grinder_id === grind.grinder_id
+          ? { ...current, default_grinder_name: grind.grinder_name }
+          : current)
       })
       .catch((error) => {
         if (error instanceof DOMException && error.name === "AbortError") return
-        setGrindSetting("Molienda recomendada")
+        setMessage("No se pudo convertir la molienda; se muestra la original.")
       })
     return () => controller.abort()
-  }, [preferences.default_grinder_slug, recipe.grind.target])
+  }, [preferences.default_grinder_id, recipe._id, recipe.grind.converted, recipe.grind.source])
 
   function persist(intent: PendingIntent) {
     startTransition(async () => {
@@ -95,10 +115,10 @@ export function RecipeExperience({ recipe, initialPreferences, timerStatus, scro
 
   useEffect(() => {
     if (!isSignedIn) return
-    const raw = sessionStorage.getItem(INTENT_KEY)
-    if (!raw) return
-    sessionStorage.removeItem(INTENT_KEY)
     try {
+      const raw = sessionStorage.getItem(INTENT_KEY)
+      if (!raw) return
+      sessionStorage.removeItem(INTENT_KEY)
       const intent = JSON.parse(raw) as PendingIntent
       if (intent.recipeId === recipe._id && (intent.kind === "saved" || intent.kind === "liked") && typeof intent.value === "boolean") persist(intent)
     } catch {
@@ -111,17 +131,25 @@ export function RecipeExperience({ recipe, initialPreferences, timerStatus, scro
   function savePreferences(next: UserPreferences) {
     setPreferences(next)
     if (!isSignedIn) {
-      sessionStorage.setItem(PREFERENCES_KEY, JSON.stringify(next))
+      try {
+        sessionStorage.setItem(PREFERENCES_KEY, JSON.stringify({
+          temperature_unit: next.temperature_unit,
+          default_grinder_id: next.default_grinder_id,
+        }))
+      } catch {
+        setMessage("No se pudieron guardar las preferencias en este navegador.")
+      }
       return
     }
     startTransition(async () => {
       const result = await updatePreferences(next)
-      if (!result.ok) setMessage(result.error.message)
+      if (result.ok) setPreferences(result.data)
+      else setMessage(result.error.message)
     })
   }
 
   function selectGrinder(grinder: GrinderOption) {
-    savePreferences({ ...preferences, default_grinder_slug: grinder.slug, default_grinder_name: grinder.name })
+    savePreferences({ ...preferences, default_grinder_id: grinder.id, default_grinder_name: `${grinder.brand} ${grinder.name}` })
   }
 
   return (
@@ -138,15 +166,15 @@ export function RecipeExperience({ recipe, initialPreferences, timerStatus, scro
         liked={optimisticLike.liked}
         likeCount={optimisticLike.count}
         onToggleLiked={() => request({ recipeId: recipe._id, kind: "liked", value: !optimisticLike.liked })}
-        grinderName={preferences.default_grinder_name}
-        grindSetting={grindSetting}
+        grinderName={displayGrind.grinder_name ?? preferences.default_grinder_name ?? `Molino #${displayGrind.grinder_id}`}
+        grindSetting={formatGrindSetting(displayGrind)}
         onTimerStatusChange={(status) => {
           onTimerStatusChange(status)
         }}
         onRequestClose={onRequestClose}
       />
       {message && <p role="status" className="fixed inset-x-4 bottom-28 z-50 mx-auto max-w-sm rounded-2xl bg-destructive px-4 py-3 text-center text-sm text-destructive-foreground shadow-xl">{message}</p>}
-      {grinderOpen && <GrinderSelector selected={preferences.default_grinder_slug} onSelect={selectGrinder} onClose={() => setGrinderOpen(false)} />}
+      {grinderOpen && <GrinderSelector selected={preferences.default_grinder_id} onSelect={selectGrinder} onClose={() => setGrinderOpen(false)} />}
     </>
   )
 }

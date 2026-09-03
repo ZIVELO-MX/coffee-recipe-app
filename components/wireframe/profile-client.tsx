@@ -7,7 +7,7 @@ import type { UserPreferences, ViewerUser } from "@/lib/domain"
 import { GrinderSelector, type GrinderOption } from "./grinder-selector"
 import { ScreenPerfil } from "./screen-perfil"
 
-const PREFERENCES_KEY = "coffee-recipe-guest-preferences"
+const PREFERENCES_KEY = "coffee-recipe-guest-preferences:v2"
 
 export function ProfileClient({ user, initialPreferences }: { user: ViewerUser; initialPreferences: UserPreferences }) {
   const { isSignedIn } = useAuth()
@@ -19,12 +19,12 @@ export function ProfileClient({ user, initialPreferences }: { user: ViewerUser; 
 
   useEffect(() => {
     if (isSignedIn) return
-    const raw = sessionStorage.getItem(PREFERENCES_KEY)
-    if (!raw) return
     try {
+      const raw = sessionStorage.getItem(PREFERENCES_KEY)
+      if (!raw) return
       const stored = JSON.parse(raw) as UserPreferences
-      if ((stored.temperature_unit === "C" || stored.temperature_unit === "F") && /^[a-z0-9-]+$/.test(stored.default_grinder_slug)) {
-        const timeout = window.setTimeout(() => setPreferences(stored), 0)
+      if ((stored.temperature_unit === "C" || stored.temperature_unit === "F") && Number.isSafeInteger(stored.default_grinder_id) && stored.default_grinder_id > 0) {
+        const timeout = window.setTimeout(() => setPreferences({ ...stored, default_grinder_name: null }), 0)
         return () => window.clearTimeout(timeout)
       }
     } catch {
@@ -35,7 +35,14 @@ export function ProfileClient({ user, initialPreferences }: { user: ViewerUser; 
   function persist(next: UserPreferences) {
     setPreferences(next)
     if (!isSignedIn) {
-      sessionStorage.setItem(PREFERENCES_KEY, JSON.stringify(next))
+      try {
+        sessionStorage.setItem(PREFERENCES_KEY, JSON.stringify({
+          temperature_unit: next.temperature_unit,
+          default_grinder_id: next.default_grinder_id,
+        }))
+      } catch {
+        setMessage("No se pudieron guardar las preferencias en este navegador.")
+      }
       return
     }
     startTransition(async () => {
@@ -45,21 +52,21 @@ export function ProfileClient({ user, initialPreferences }: { user: ViewerUser; 
   }
 
   function selectGrinder(grinder: GrinderOption) {
-    persist({ ...preferences, default_grinder_slug: grinder.slug, default_grinder_name: grinder.name })
+    persist({ ...preferences, default_grinder_id: grinder.id, default_grinder_name: `${grinder.brand} ${grinder.name}` })
   }
 
   return (
     <>
       <ScreenPerfil
         user={user}
-        grinder={preferences.default_grinder_name}
+        grinder={preferences.default_grinder_name ?? `Molino #${preferences.default_grinder_id}`}
         tempUnit={preferences.temperature_unit}
         onOpenGrinder={() => setGrinderOpen(true)}
         onToggleUnit={(temperature_unit) => persist({ ...preferences, temperature_unit })}
         onLogout={() => void signOut({ redirectUrl: "/recipes" })}
       />
       {message && <p role="status" className="mx-4 -mt-28 rounded-2xl border border-border bg-card p-3 text-center text-xs text-muted-foreground">{message}</p>}
-      {grinderOpen && <GrinderSelector selected={preferences.default_grinder_slug} onSelect={selectGrinder} onClose={() => setGrinderOpen(false)} />}
+      {grinderOpen && <GrinderSelector selected={preferences.default_grinder_id} onSelect={selectGrinder} onClose={() => setGrinderOpen(false)} />}
     </>
   )
 }

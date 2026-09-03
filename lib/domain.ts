@@ -9,15 +9,6 @@ export const methodSchema = z.enum([
   "kalita",
 ])
 
-export const brewmarkMethodSchema = z.enum([
-  "v60",
-  "chemex",
-  "aeropress",
-  "frenchpress",
-  "moka",
-  "flatbottom",
-])
-
 export const recipeStepSchema = z.object({
   instruction: z.string().trim().min(1).max(240),
   start: z.number().int().min(0),
@@ -31,7 +22,10 @@ export const recipeInputSchema = z.object({
   coffee_g: z.number().positive().max(2000),
   water_ml: z.number().positive().max(10000),
   temperature_c: z.number().min(0).max(120),
-  grind: z.object({ target: brewmarkMethodSchema }),
+  grind: z.object({
+    grinder_id: z.number().int().positive(),
+    setting: z.number().finite().min(0),
+  }),
   preparation: z.array(z.string().trim().min(1).max(300)).min(1).max(30),
   steps: z.array(recipeStepSchema).min(1).max(100),
   image: z.string().trim().refine(
@@ -47,6 +41,7 @@ export const recipeInputSchema = z.object({
 export type RecipeInput = z.infer<typeof recipeInputSchema>
 export type RecipeStep = z.infer<typeof recipeStepSchema>
 export type Method = RecipeInput["method"]
+export type RecipeGrind = RecipeInput["grind"]
 
 export const METHOD_LABEL: Record<Method, string> = {
   v60: "V60",
@@ -70,9 +65,23 @@ export type RecipeListItem = Omit<RecipeDocument, "preparation" | "steps"> & {
   viewer_saved: boolean
 }
 
-export type RecipeView = RecipeInput & {
+export const grinderUnitSchema = z.enum(["NUMBER", "CLICKS", "ROTATIONS"])
+export type GrinderUnit = z.infer<typeof grinderUnitSchema>
+
+export type GrindSettingView = {
+  grinder_id: number
+  grinder_name: string | null
+  setting: number
+  setting_unit: GrinderUnit | null
+}
+
+export type RecipeView = Omit<RecipeInput, "grind"> & {
   _id: string
   image: string
+  grind: {
+    source: GrindSettingView
+    converted?: GrindSettingView
+  }
   total_seconds: number
   like_count: number
   viewer_liked: boolean
@@ -84,8 +93,8 @@ export type TemperatureUnit = z.infer<typeof temperatureUnitSchema>
 
 export type UserPreferences = {
   temperature_unit: TemperatureUnit
-  default_grinder_slug: string
-  default_grinder_name: string
+  default_grinder_id: number
+  default_grinder_name: string | null
 }
 
 export type ViewerUser = {
@@ -122,15 +131,6 @@ export type ActionErrorCode = "AUTH_REQUIRED" | "NOT_FOUND" | "INVALID_INPUT" | 
 export type ActionResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: { code: ActionErrorCode; message: string } }
-
-export const methodToBrewmark: Record<RecipeInput["method"], RecipeInput["grind"]["target"]> = {
-  v60: "v60",
-  chemex: "chemex",
-  aeropress: "aeropress",
-  "french-press": "frenchpress",
-  moka: "moka",
-  kalita: "flatbottom",
-}
 
 export function validateTimeline(steps: RecipeStep[]): RecipeStep[] {
   if (steps.at(-1)?.end === undefined) {

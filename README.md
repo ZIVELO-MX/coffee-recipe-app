@@ -12,8 +12,8 @@ cp .env.example .env.local
 pnpm dev
 \`\`\`
 
-Las rutas públicas de datos son `GET /api/recipes`, `GET /api/recipes/:id`,
-`GET /api/grinders` y `GET /api/grinders/:slug`. Las operaciones de
+Las rutas públicas de datos son `GET /api/recipes`, `GET /api/recipes/:id` y
+`GET /api/grinders`. Las operaciones de
 administración están bajo `/api/admin/recipes` y requieren el token de servicio
 o una sesión Clerk con `metadata.role=admin`.
 
@@ -33,16 +33,24 @@ pnpm db:indexes
 pnpm db:seed
 \`\`\`
 
-El catálogo de molinos procede de BrewMark y se cachea durante 24 horas. Las
+El catálogo y las curvas de molinos proceden de BrewMark y se cachean durante
+24 horas. Koda convierte en el backend el ajuste original de una receta al
+molino seleccionado por el usuario; los clientes no descargan las curvas ni
+persisten equivalencias. Las
 credenciales se configuran únicamente mediante `.env.local`; nunca se
 incluyen en commits.
 
 ## Datos y filtros
 
-`pnpm db:seed` carga de forma idempotente las cinco recetas iniciales. La app
+`pnpm db:seed` carga de forma idempotente la receta curada `V60 Regular`. La app
 no usa fixtures en runtime: Buscar, Guardados y el detalle consultan MongoDB.
 `GET /api/recipes` acepta filtros repetibles `method`, `coffee`, `water`,
 `temperature` y `duration`, además de `q`, `page` y `pageSize`.
+
+Cada receta persiste exclusivamente su molienda original como
+`{ grinder_id, setting }`. `GET /api/recipes/:id?grinder=<id>` añade una
+conversión efímera para el molino solicitado y distingue `grind.source` de
+`grind.converted`. Sin el parámetro, solo devuelve la molienda original.
 
 ## Pruebas y despliegue
 

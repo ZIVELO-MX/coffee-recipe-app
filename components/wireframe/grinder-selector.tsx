@@ -4,10 +4,10 @@ import { Check, Search, X } from "lucide-react"
 import { createPortal } from "react-dom"
 import { useEffect, useMemo, useRef, useState } from "react"
 
-export type GrinderOption = { slug: string; brand: string; name: string }
+export type GrinderOption = { id: number; brand: string; name: string }
 
 export function GrinderSelector({ selected, onSelect, onClose }: {
-  selected: string
+  selected: number
   onSelect: (grinder: GrinderOption) => void
   onClose: () => void
 }) {
@@ -63,8 +63,8 @@ export function GrinderSelector({ selected, onSelect, onClose }: {
               <p className="mb-1.5 px-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary">{brand}</p>
               <div className="flex flex-col gap-1.5">
                 {models?.map((grinder) => {
-                  const isSelected = selected === grinder.slug
-                  return <button key={grinder.slug} type="button" onClick={() => { onSelect(grinder); onClose() }} className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3.5 text-left text-sm transition-colors ${isSelected ? "border-primary/50 bg-primary/10 text-foreground" : "border-border bg-card text-foreground hover:bg-secondary/50"}`}>{grinder.name}{isSelected && <Check className="h-4 w-4 text-primary" aria-hidden="true" />}</button>
+                  const isSelected = selected === grinder.id
+                  return <button key={grinder.id} type="button" onClick={() => { onSelect(grinder); onClose() }} className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3.5 text-left text-sm transition-colors ${isSelected ? "border-primary/50 bg-primary/10 text-foreground" : "border-border bg-card text-foreground hover:bg-secondary/50"}`}>{grinder.name}{isSelected && <Check className="h-4 w-4 text-primary" aria-hidden="true" />}</button>
                 })}
               </div>
             </div>
