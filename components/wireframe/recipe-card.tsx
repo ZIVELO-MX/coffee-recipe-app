@@ -27,7 +27,7 @@ export function RecipeCard({
         openRecipe(recipe)
       }}
       style={{ animationDelay: `${index * 90}ms` }}
-      className="group animate-rise relative flex w-full flex-col overflow-hidden rounded-3xl border border-border bg-card text-left transition-[transform,border-color,box-shadow] duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-2xl active:scale-[0.98]"
+      className="group animate-rise relative flex w-full flex-col overflow-hidden rounded-3xl border border-border bg-card text-left transition-[border-color,box-shadow] duration-300 hover:border-primary/30 hover:shadow-2xl active:scale-[0.98]"
     >
       <div className="flex items-start gap-4 p-5 pb-4">
         <AppearanceAvatar appearance={recipe.appearance} size="md" className="transition-transform duration-300 group-hover:scale-[1.04]" />
