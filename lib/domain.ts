@@ -1,5 +1,34 @@
 import { z } from "zod"
 
+export const appearanceIconSchema = z.enum([
+  "coffee",
+  "bean",
+  "droplets",
+  "flame",
+  "timer",
+  "scale",
+  "gauge",
+  "sparkles",
+])
+
+export const appearanceBackgroundSchema = z.enum([
+  "caramel",
+  "crema",
+  "terracotta",
+  "olive",
+  "mocha",
+  "slate",
+])
+
+export const appearanceSchema = z.object({
+  icon: appearanceIconSchema,
+  background: appearanceBackgroundSchema,
+}).strict()
+
+export type Appearance = z.infer<typeof appearanceSchema>
+export type AppearanceIcon = z.infer<typeof appearanceIconSchema>
+export type AppearanceBackground = z.infer<typeof appearanceBackgroundSchema>
+
 export const methodSchema = z.enum([
   "v60",
   "chemex",
@@ -28,22 +57,14 @@ export const recipeInputSchema = z.object({
   }),
   preparation: z.array(z.string().trim().min(1).max(300)).min(1).max(30),
   steps: z.array(recipeStepSchema).min(1).max(100),
-  image: z.string().trim().refine(
-    (value) => {
-      if (/^\/[a-zA-Z0-9/_-]+\.(?:avif|gif|jpe?g|png|webp)$/.test(value)) return true
-      if (!URL.canParse(value)) return false
-      return ["http:", "https:"].includes(new URL(value).protocol)
-    },
-    "Image must be a safe local path or an absolute URL",
-  ).optional(),
-})
+  appearance: appearanceSchema.optional(),
+}).strict()
 
 export type RecipeInput = z.infer<typeof recipeInputSchema>
 export const personalRecipeInputSchema = recipeInputSchema.omit({ author: true }).strict()
 export type PersonalRecipeInput = z.infer<typeof personalRecipeInputSchema>
 export const personalRecipePatchSchema = personalRecipeInputSchema
   .partial()
-  .extend({ image: recipeInputSchema.shape.image.nullable().optional() })
   .strict()
   .refine((value) => Object.keys(value).length > 0, "At least one field is required")
 export type PersonalRecipePatch = z.infer<typeof personalRecipePatchSchema>
@@ -77,6 +98,25 @@ export const METHOD_LABEL: Record<Method, string> = {
   kalita: "Kalita",
 }
 
+export const DEFAULT_AVATAR_APPEARANCE: Appearance = {
+  icon: "coffee",
+  background: "caramel",
+}
+
+export const METHOD_APPEARANCE: Record<Method, Appearance> = {
+  v60: { icon: "droplets", background: "caramel" },
+  chemex: { icon: "sparkles", background: "crema" },
+  aeropress: { icon: "gauge", background: "terracotta" },
+  "french-press": { icon: "coffee", background: "olive" },
+  moka: { icon: "flame", background: "mocha" },
+  kalita: { icon: "scale", background: "slate" },
+}
+
+export function recipeAppearance(method: Method, value?: unknown): Appearance {
+  const parsed = appearanceSchema.safeParse(value)
+  return parsed.success ? parsed.data : METHOD_APPEARANCE[method]
+}
+
 export type RecipeDocument = RecipeInput & {
   _id: string
   created_at: Date
@@ -100,9 +140,9 @@ export type GrindSettingView = {
   setting_unit: GrinderUnit | null
 }
 
-export type RecipeView = Omit<RecipeInput, "grind"> & {
+export type RecipeView = Omit<RecipeInput, "grind" | "appearance"> & {
   _id: string
-  image: string
+  appearance: Appearance
   grind: {
     source: GrindSettingView
     converted?: GrindSettingView
@@ -120,12 +160,12 @@ export type UserPreferences = {
   temperature_unit: TemperatureUnit
   default_grinder_id: number
   default_grinder_name: string | null
+  avatar: Appearance
 }
 
 export type ViewerUser = {
   name: string
   email: string
-  avatarId: string
   guest?: boolean
 }
 

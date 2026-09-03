@@ -6,8 +6,10 @@ import { revalidatePath } from "next/cache"
 import { getDatabase } from "@/lib/db"
 import { BrewmarkUnavailableError, getGrinder, GrinderNotFoundError, grinderName } from "@/lib/brewmark"
 import {
+  appearanceSchema,
   temperatureUnitSchema,
   type ActionResult,
+  type Appearance,
   type TemperatureUnit,
   type UserPreferences,
 } from "@/lib/domain"
@@ -79,7 +81,8 @@ export async function updatePreferences(input: UserPreferences): Promise<ActionR
   const { userId } = await auth()
   if (!userId) return failure("AUTH_REQUIRED", "Inicia sesión para guardar tus preferencias.")
   const unit = temperatureUnitSchema.safeParse(input.temperature_unit)
-  if (!unit.success || !Number.isSafeInteger(input.default_grinder_id) || input.default_grinder_id <= 0) {
+  const avatar = appearanceSchema.safeParse(input.avatar)
+  if (!unit.success || !avatar.success || !Number.isSafeInteger(input.default_grinder_id) || input.default_grinder_id <= 0) {
     return failure("INVALID_INPUT", "Las preferencias no son válidas.")
   }
   try {
@@ -88,6 +91,7 @@ export async function updatePreferences(input: UserPreferences): Promise<ActionR
       temperature_unit: unit.data as TemperatureUnit,
       default_grinder_id: grinder.id,
       default_grinder_name: grinderName(grinder),
+      avatar: avatar.data,
     }
     await (await getDatabase()).collection("user_preferences").updateOne(
       { clerk_user_id: userId },
@@ -109,5 +113,27 @@ export async function updatePreferences(input: UserPreferences): Promise<ActionR
     if (error instanceof BrewmarkUnavailableError) return failure("DB_UNAVAILABLE", "No se pudo validar el molino con BrewMark.")
     console.error("preferences.update_failed", { error })
     return failure("DB_UNAVAILABLE", "No se pudieron guardar las preferencias.")
+  }
+}
+
+export async function updateAvatar(avatar: Appearance): Promise<ActionResult<Appearance>> {
+  const { userId } = await auth()
+  if (!userId) return failure("AUTH_REQUIRED", "Inicia sesión para cambiar tu avatar.")
+  const parsed = appearanceSchema.safeParse(avatar)
+  if (!parsed.success) return failure("INVALID_INPUT", "El avatar no es válido.")
+  try {
+    await (await getDatabase()).collection("user_preferences").updateOne(
+      { clerk_user_id: userId },
+      {
+        $set: { avatar: parsed.data, updated_at: new Date() },
+        $setOnInsert: { clerk_user_id: userId, created_at: new Date() },
+      },
+      { upsert: true },
+    )
+    revalidatePath("/profile")
+    return { ok: true, data: parsed.data }
+  } catch (error) {
+    console.error("avatar.update_failed", { error })
+    return failure("DB_UNAVAILABLE", "No se pudo guardar el avatar.")
   }
 }

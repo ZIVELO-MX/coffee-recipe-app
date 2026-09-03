@@ -66,13 +66,11 @@ export async function patchPersonalRecipe(
     grind: current.grind,
     preparation: current.preparation,
     steps: current.steps,
-    ...(current.image ? { image: current.image } : {}),
+    ...(current.appearance ? { appearance: current.appearance } : {}),
   })
-  const { image, ...otherChanges } = changes
   const candidate = recipeInputSchema.parse({
     ...currentInput,
-    ...otherChanges,
-    ...(image === null ? { image: undefined } : image === undefined ? {} : { image }),
+    ...changes,
   })
   validateRecipeTimeline(candidate)
   if (changes.grind) {
@@ -81,8 +79,8 @@ export async function patchPersonalRecipe(
   }
 
   const update = {
-    $set: { ...otherChanges, ...(typeof image === "string" ? { image } : {}), updated_at: new Date() },
-    ...(image === null ? { $unset: { image: "" } } : {}),
+    $set: { ...changes, updated_at: new Date() },
+    $unset: { image: "" },
   }
   const result = await db.collection("recipes").updateOne(
     { _id: recipeId, created_by_clerk_user_id: userId },

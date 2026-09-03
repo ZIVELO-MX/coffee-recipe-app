@@ -2,9 +2,10 @@
 
 import { useAuth, useClerk } from "@clerk/nextjs"
 import { useEffect, useState, useTransition } from "react"
-import { updatePreferences } from "@/app/actions"
-import type { ApiKeyStatus, UserPreferences, ViewerUser } from "@/lib/domain"
+import { updateAvatar, updatePreferences } from "@/app/actions"
+import type { ApiKeyStatus, Appearance, UserPreferences, ViewerUser } from "@/lib/domain"
 import { ApiKeyDialog } from "./api-key-dialog"
+import { AvatarPickerDialog } from "./avatar-picker-dialog"
 import { GrinderSelector, type GrinderOption } from "./grinder-selector"
 import { ScreenPerfil } from "./screen-perfil"
 
@@ -24,18 +25,25 @@ export function ProfileClient({
   const [preferences, setPreferences] = useState(initialPreferences)
   const [grinderOpen, setGrinderOpen] = useState(false)
   const [apiKeyOpen, setApiKeyOpen] = useState(false)
+  const [avatarOpen, setAvatarOpen] = useState(false)
   const [apiKeyStatus, setApiKeyStatus] = useState(initialApiKeyStatus)
   const [message, setMessage] = useState("")
-  const [, startTransition] = useTransition()
+  const [pending, startTransition] = useTransition()
 
   useEffect(() => {
     if (isSignedIn) return
     try {
       const raw = sessionStorage.getItem(PREFERENCES_KEY)
       if (!raw) return
-      const stored = JSON.parse(raw) as UserPreferences
-      if ((stored.temperature_unit === "C" || stored.temperature_unit === "F") && Number.isSafeInteger(stored.default_grinder_id) && stored.default_grinder_id > 0) {
-        const timeout = window.setTimeout(() => setPreferences({ ...stored, default_grinder_name: null }), 0)
+      const stored = JSON.parse(raw) as Partial<UserPreferences>
+      const storedGrinderId = stored.default_grinder_id
+      if ((stored.temperature_unit === "C" || stored.temperature_unit === "F") && typeof storedGrinderId === "number" && Number.isSafeInteger(storedGrinderId) && storedGrinderId > 0) {
+        const timeout = window.setTimeout(() => setPreferences((current) => ({
+          ...current,
+          temperature_unit: stored.temperature_unit!,
+          default_grinder_id: storedGrinderId,
+          default_grinder_name: null,
+        })), 0)
         return () => window.clearTimeout(timeout)
       }
     } catch {
@@ -66,13 +74,28 @@ export function ProfileClient({
     persist({ ...preferences, default_grinder_id: grinder.id, default_grinder_name: `${grinder.brand} ${grinder.name}` })
   }
 
+  function saveAvatar(avatar: Appearance) {
+    startTransition(async () => {
+      const result = await updateAvatar(avatar)
+      if (result.ok) {
+        setPreferences((current) => ({ ...current, avatar: result.data }))
+        setAvatarOpen(false)
+        setMessage("Avatar guardado.")
+      } else {
+        setMessage(result.error.message)
+      }
+    })
+  }
+
   return (
     <>
       <ScreenPerfil
         user={user}
+        avatar={preferences.avatar}
         grinder={preferences.default_grinder_name ?? `Molino #${preferences.default_grinder_id}`}
         tempUnit={preferences.temperature_unit}
         onOpenGrinder={() => setGrinderOpen(true)}
+        onOpenAvatar={() => setAvatarOpen(true)}
         onToggleUnit={(temperature_unit) => persist({ ...preferences, temperature_unit })}
         apiKeyStatus={apiKeyStatus}
         onOpenApiKey={() => setApiKeyOpen(true)}
@@ -81,12 +104,23 @@ export function ProfileClient({
       {message && <p role="status" className="mx-4 -mt-28 rounded-2xl border border-border bg-card p-3 text-center text-xs text-muted-foreground">{message}</p>}
       {grinderOpen && <GrinderSelector selected={preferences.default_grinder_id} onSelect={selectGrinder} onClose={() => setGrinderOpen(false)} />}
       {!user.guest && (
-        <ApiKeyDialog
-          open={apiKeyOpen}
-          onOpenChange={setApiKeyOpen}
-          status={apiKeyStatus}
-          onStatusChange={setApiKeyStatus}
-        />
+        <>
+          {avatarOpen && (
+            <AvatarPickerDialog
+              open
+              onOpenChange={setAvatarOpen}
+              value={preferences.avatar}
+              onSave={saveAvatar}
+              pending={pending}
+            />
+          )}
+          <ApiKeyDialog
+            open={apiKeyOpen}
+            onOpenChange={setApiKeyOpen}
+            status={apiKeyStatus}
+            onStatusChange={setApiKeyStatus}
+          />
+        </>
       )}
     </>
   )

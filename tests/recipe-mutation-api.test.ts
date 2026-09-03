@@ -45,6 +45,24 @@ describe("personal recipe mutations", () => {
     expect(mocks.patchPersonalRecipe).toHaveBeenCalledWith(recipeId, { name: "V60 diario" }, "user_1")
   })
 
+  it("patches a recipe appearance and rejects the removed image field", async () => {
+    const appearance = { icon: "bean", background: "olive" }
+    const response = await PATCH(new NextRequest(`http://localhost/api/recipes/${recipeId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ appearance }),
+    }), context)
+    expect(response.status).toBe(200)
+    expect(mocks.patchPersonalRecipe).toHaveBeenCalledWith(recipeId, { appearance }, "user_1")
+
+    mocks.patchPersonalRecipe.mockClear()
+    const legacyResponse = await PATCH(new NextRequest(`http://localhost/api/recipes/${recipeId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ image: "/methods/v60.png" }),
+    }), context)
+    expect(legacyResponse.status).toBe(400)
+    expect(mocks.patchPersonalRecipe).not.toHaveBeenCalled()
+  })
+
   it("does not reveal whether a missing or foreign recipe exists", async () => {
     mocks.patchPersonalRecipe.mockRejectedValue(new PersonalRecipeNotFoundError("missing"))
     const response = await PATCH(new NextRequest(`http://localhost/api/recipes/${recipeId}`, {

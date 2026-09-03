@@ -53,9 +53,15 @@ export function RecipeExperience({ recipe, initialPreferences, timerStatus, scro
     try {
       const raw = sessionStorage.getItem(PREFERENCES_KEY)
       if (!raw) return
-      const stored = JSON.parse(raw) as UserPreferences
-      if ((stored.temperature_unit === "C" || stored.temperature_unit === "F") && Number.isSafeInteger(stored.default_grinder_id) && stored.default_grinder_id > 0) {
-        const timeout = window.setTimeout(() => setPreferences({ ...stored, default_grinder_name: null }), 0)
+      const stored = JSON.parse(raw) as Partial<UserPreferences>
+      const storedGrinderId = stored.default_grinder_id
+      if ((stored.temperature_unit === "C" || stored.temperature_unit === "F") && typeof storedGrinderId === "number" && Number.isSafeInteger(storedGrinderId) && storedGrinderId > 0) {
+        const timeout = window.setTimeout(() => setPreferences((current) => ({
+          ...current,
+          temperature_unit: stored.temperature_unit!,
+          default_grinder_id: storedGrinderId,
+          default_grinder_name: null,
+        })), 0)
         return () => window.clearTimeout(timeout)
       }
     } catch {

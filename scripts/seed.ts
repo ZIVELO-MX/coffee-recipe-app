@@ -21,6 +21,7 @@ async function main() {
           ...recipe,
           updated_at: now,
         },
+        $unset: { image: "" },
         $setOnInsert: { legacy_id, created_at: now },
       },
       { upsert: true },

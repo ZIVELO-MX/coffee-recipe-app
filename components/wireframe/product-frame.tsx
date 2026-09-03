@@ -3,11 +3,16 @@
 import type { ReactNode } from "react"
 import { usePathname } from "next/navigation"
 import { createContext, useContext, useEffect, useRef, useState } from "react"
-import type { RecipeView, UserPreferences } from "@/lib/domain"
+import { DEFAULT_AVATAR_APPEARANCE, type RecipeView, type UserPreferences } from "@/lib/domain"
 import { BottomNav, type Tab } from "./bottom-nav"
 import { RecipeSheet } from "./recipe-sheet"
 
-const DEFAULT_PREFERENCES: UserPreferences = { temperature_unit: "C", default_grinder_id: 76, default_grinder_name: "Timemore C3" }
+const DEFAULT_PREFERENCES: UserPreferences = {
+  temperature_unit: "C",
+  default_grinder_id: 76,
+  default_grinder_name: "Timemore C3",
+  avatar: DEFAULT_AVATAR_APPEARANCE,
+}
 const RecipeOverlayContext = createContext<((recipe: RecipeView) => void) | null>(null)
 
 export function useRecipeOverlay() {

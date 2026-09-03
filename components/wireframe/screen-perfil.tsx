@@ -1,45 +1,49 @@
 "use client"
 
 import { ChevronRight, Code2, KeyRound, LogIn, LogOut, Settings2 } from "lucide-react"
-import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs"
-import Image from "next/image"
-import { getAvatar } from "@/lib/avatars"
-import type { ApiKeyStatus, ViewerUser } from "@/lib/domain"
+import { SignInButton, SignUpButton } from "@clerk/nextjs"
+import { AppearanceAvatar } from "./appearance-avatar"
+import type { ApiKeyStatus, Appearance, ViewerUser } from "@/lib/domain"
 import { InstallApp } from "@/components/pwa/install-app"
 
 export function ScreenPerfil({
   user,
+  avatar,
   grinder,
   tempUnit,
   onOpenGrinder,
+  onOpenAvatar,
   onToggleUnit,
   apiKeyStatus,
   onOpenApiKey,
   onLogout,
 }: {
   user: ViewerUser
+  avatar: Appearance
   grinder: string
   tempUnit: "C" | "F"
   onOpenGrinder: () => void
+  onOpenAvatar: () => void
   onToggleUnit: (unit: "C" | "F") => void
   apiKeyStatus: ApiKeyStatus
   onOpenApiKey: () => void
   onLogout: () => void
 }) {
-  const avatar = getAvatar(user.avatarId)
-
   return (
     <div className="flex flex-col gap-7 px-4 pb-32 pt-8">
       <header className="flex flex-col items-center gap-3 text-center">
-        <div className="relative glow-accent h-20 w-20 overflow-hidden rounded-full border-2 border-primary/40">
-          <Image
-            src={avatar.src || "/icon.svg"}
-            alt={`Avatar ${avatar.label}`}
-            fill
-            sizes="80px"
-            className="h-full w-full object-cover"
-          />
-        </div>
+        {user.guest ? (
+          <AppearanceAvatar appearance={avatar} size="lg" className="glow-accent size-20" />
+        ) : (
+          <button
+            type="button"
+            onClick={onOpenAvatar}
+            aria-label="Cambiar avatar"
+            className="group relative rounded-full outline-none transition-transform active:scale-[0.97] focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          >
+            <AppearanceAvatar appearance={avatar} size="lg" className="glow-accent size-20 transition-transform group-hover:scale-[1.03]" />
+          </button>
+        )}
         <div>
           <h1 className="font-serif text-2xl font-extrabold text-foreground">{user.name}</h1>
           <p className="text-sm text-muted-foreground">
@@ -155,11 +159,14 @@ export function ScreenPerfil({
           </div>
         ) : (
           <div className="flex items-center justify-between gap-3 rounded-3xl border border-border bg-card p-4">
-            <UserButton />
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <span className="truncate text-sm font-semibold text-foreground">{user.name}</span>
+              <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+            </div>
             <button
               type="button"
               onClick={onLogout}
-              className="flex flex-1 items-center justify-center gap-2 rounded-full border border-border px-4 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50 active:scale-[0.98]"
+              className="flex shrink-0 items-center justify-center gap-2 rounded-full border border-border px-4 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50 active:scale-[0.98]"
             >
               <LogOut className="h-4 w-4" aria-hidden="true" />
               Cerrar sesión

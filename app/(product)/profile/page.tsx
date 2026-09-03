@@ -16,7 +16,6 @@ export default async function ProfilePage() {
   const user: ViewerUser = clerkUser ? {
     name: viewerDisplayName(clerkUser),
     email: clerkUser.primaryEmailAddress?.emailAddress ?? "",
-    avatarId: "espresso",
-  } : { name: "Invitado", email: "", avatarId: "espresso", guest: true }
+  } : { name: "Invitado", email: "", guest: true }
   return <TabPageTransition><ProfileClient user={user} initialPreferences={preferences} initialApiKeyStatus={apiKeyStatus} /></TabPageTransition>
 }

@@ -9,6 +9,7 @@ import {
 } from "@/lib/brewmark"
 import {
   recipeFiltersSchema,
+  recipeAppearance,
   type RecipeFilters,
   type RecipePage,
   type RecipeView,
@@ -68,7 +69,7 @@ function serializeRecipe(document: Document): RecipeView {
     name: document.name,
     author: document.author,
     method: document.method,
-    image: document.image ?? "/icon.svg",
+    appearance: recipeAppearance(document.method, document.appearance),
     coffee_g: document.coffee_g,
     water_ml: document.water_ml,
     temperature_c: document.temperature_c,

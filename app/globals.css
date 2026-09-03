@@ -34,6 +34,18 @@
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
+  --color-avatar-caramel: var(--avatar-caramel);
+  --color-avatar-caramel-foreground: var(--avatar-caramel-foreground);
+  --color-avatar-crema: var(--avatar-crema);
+  --color-avatar-crema-foreground: var(--avatar-crema-foreground);
+  --color-avatar-terracotta: var(--avatar-terracotta);
+  --color-avatar-terracotta-foreground: var(--avatar-terracotta-foreground);
+  --color-avatar-olive: var(--avatar-olive);
+  --color-avatar-olive-foreground: var(--avatar-olive-foreground);
+  --color-avatar-mocha: var(--avatar-mocha);
+  --color-avatar-mocha-foreground: var(--avatar-mocha-foreground);
+  --color-avatar-slate: var(--avatar-slate);
+  --color-avatar-slate-foreground: var(--avatar-slate-foreground);
 
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
@@ -79,6 +91,19 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 14%);
   --ring: oklch(0.77 0.132 63);
+
+  --avatar-caramel: oklch(0.77 0.132 63);
+  --avatar-caramel-foreground: oklch(0.2 0.03 62);
+  --avatar-crema: oklch(0.88 0.055 82);
+  --avatar-crema-foreground: oklch(0.27 0.035 68);
+  --avatar-terracotta: oklch(0.63 0.115 39);
+  --avatar-terracotta-foreground: oklch(0.97 0.018 67);
+  --avatar-olive: oklch(0.61 0.072 104);
+  --avatar-olive-foreground: oklch(0.98 0.012 88);
+  --avatar-mocha: oklch(0.47 0.055 53);
+  --avatar-mocha-foreground: oklch(0.96 0.02 76);
+  --avatar-slate: oklch(0.52 0.035 246);
+  --avatar-slate-foreground: oklch(0.97 0.008 236);
 
   --chart-1: oklch(0.77 0.132 63);
   --chart-2: oklch(0.68 0.1 55);

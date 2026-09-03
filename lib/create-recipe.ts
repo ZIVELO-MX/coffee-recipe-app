@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb"
 import { getDatabase } from "@/lib/db"
 import { validateRecipeGrind } from "@/lib/brewmark"
-import { validateTimeline, type RecipeInput } from "@/lib/domain"
+import { recipeAppearance, validateTimeline, type RecipeInput } from "@/lib/domain"
 
 export async function createRecipe(
   recipe: RecipeInput,
@@ -12,6 +12,7 @@ export async function createRecipe(
   const now = new Date()
   const document = {
     ...recipe,
+    appearance: recipeAppearance(recipe.method, recipe.appearance),
     ...(options.createdByClerkUserId ? { created_by_clerk_user_id: options.createdByClerkUserId } : {}),
     created_at: now,
     updated_at: now,
