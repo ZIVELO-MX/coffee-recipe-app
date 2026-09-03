@@ -195,7 +195,16 @@ export function assertValidGrind(grinder: BrewmarkGrinder, setting: number): voi
 }
 
 export async function validateRecipeGrind(grind: RecipeGrind): Promise<BrewmarkGrinder> {
-  const grinder = await getGrinder(grind.grinder_id)
+  const { grinders } = await getGrinderCatalog()
+  return validateRecipeGrindFromCatalog(grind, grinders)
+}
+
+export function validateRecipeGrindFromCatalog(
+  grind: RecipeGrind,
+  grinders: BrewmarkGrinder[],
+): BrewmarkGrinder {
+  const grinder = grinders.find(({ id }) => id === grind.grinder_id)
+  if (!grinder) throw new GrinderNotFoundError(`Unknown grinder ${grind.grinder_id}`)
   assertValidGrind(grinder, grind.setting)
   return grinder
 }

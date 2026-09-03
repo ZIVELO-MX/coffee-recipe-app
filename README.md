@@ -32,6 +32,7 @@ clave.
 ```sh
 curl --request POST https://tu-dominio.example/api/recipes \
   --header 'Authorization: Bearer koda_sk_REEMPLAZA_ESTA_CLAVE' \
+  --header 'Idempotency-Key: receta-v60-2026-09-03' \
   --header 'Content-Type: application/json' \
   --data '{
     "name": "V60 personal",
@@ -47,6 +48,27 @@ curl --request POST https://tu-dominio.example/api/recipes \
     ]
   }'
 ```
+
+Las recetas creadas con una clave pueden modificarse o eliminarse únicamente
+con una clave del mismo usuario:
+
+```sh
+curl --request PATCH https://tu-dominio.example/api/recipes/OBJECT_ID \
+  --header 'Authorization: Bearer koda_sk_REEMPLAZA_ESTA_CLAVE' \
+  --header 'Content-Type: application/json' \
+  --data '{ "temperature_c": 92 }'
+
+curl --request DELETE https://tu-dominio.example/api/recipes/OBJECT_ID \
+  --header 'Authorization: Bearer koda_sk_REEMPLAZA_ESTA_CLAVE'
+```
+
+`POST`, `PATCH` y `DELETE /api/recipes/bulk` aceptan hasta 50 elementos y
+devuelven un resultado por elemento. `Idempotency-Key` es opcional en las
+creaciones individual y bulk; reutilizarlo con el mismo body reproduce la
+respuesta durante 24 horas sin duplicar recetas.
+
+La subida de imágenes todavía no forma parte de la API. `image` puede omitirse
+o contener una URL/ruta admitida por el schema actual.
 
 ## Verificación
 
@@ -99,7 +121,7 @@ Producción debe usar una base MongoDB y una instancia Clerk separadas de
 desarrollo. Configura `MONGODB_URI`, `MONGODB_DB`, las claves de Clerk,
 `RECIPE_ADMIN_API_TOKEN` y las rutas públicas de autenticación documentadas en
 `.env.example`. Ejecuta `pnpm db:indexes` una vez contra la base productiva para
-crear también los índices únicos de `api_keys`; ejecuta el seed solo cuando
+crear también los índices únicos de `api_keys`, ownership e idempotencia; ejecuta el seed solo cuando
 corresponda inicializar las recetas curadas.
 
 Después de que CI esté completamente verde, conecta el repositorio en Vercel,

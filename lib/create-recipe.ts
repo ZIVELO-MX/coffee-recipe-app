@@ -1,19 +1,30 @@
+import { ObjectId } from "mongodb"
 import { getDatabase } from "@/lib/db"
 import { validateRecipeGrind } from "@/lib/brewmark"
 import { validateTimeline, type RecipeInput } from "@/lib/domain"
 
 export async function createRecipe(
   recipe: RecipeInput,
-  options: { createdByClerkUserId?: string } = {},
+  options: { createdByClerkUserId?: string; id?: ObjectId; grindValidated?: boolean } = {},
 ): Promise<string> {
   validateTimeline(recipe.steps)
-  await validateRecipeGrind(recipe.grind)
+  if (!options.grindValidated) await validateRecipeGrind(recipe.grind)
   const now = new Date()
-  const result = await (await getDatabase()).collection("recipes").insertOne({
+  const document = {
     ...recipe,
     ...(options.createdByClerkUserId ? { created_by_clerk_user_id: options.createdByClerkUserId } : {}),
     created_at: now,
     updated_at: now,
-  })
+  }
+  const collection = (await getDatabase()).collection("recipes")
+  if (options.id) {
+    await collection.updateOne(
+      { _id: options.id },
+      { $setOnInsert: document },
+      { upsert: true },
+    )
+    return options.id.toString()
+  }
+  const result = await collection.insertOne(document)
   return result.insertedId.toString()
 }

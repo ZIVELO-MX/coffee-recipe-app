@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { ObjectId } from "mongodb"
 import { NextRequest } from "next/server"
 import { InvalidApiKeyError } from "@/lib/api-keys"
 import { SEED_RECIPES } from "@/scripts/seed-data"
@@ -47,7 +48,7 @@ describe("POST /api/recipes", () => {
     expect(await response.json()).toEqual({ id: "507f1f77bcf86cd799439011" })
     expect(mocks.createRecipe).toHaveBeenCalledWith(
       { ...input, author: "Ana Cafetera" },
-      { createdByClerkUserId: "user_1" },
+      { createdByClerkUserId: "user_1", id: expect.any(ObjectId), grindValidated: false },
     )
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/recipes")
   })

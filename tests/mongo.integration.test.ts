@@ -36,12 +36,14 @@ suite("MongoDB recipe persistence", () => {
   let getRecipePage: typeof import("@/lib/recipes")["getRecipePage"]
   let getSavedRecipes: typeof import("@/lib/recipes")["getSavedRecipes"]
   let apiKeys: typeof import("@/lib/api-keys")
+  let personalRecipes: typeof import("@/lib/personal-recipes")
 
   beforeAll(async () => {
     process.env.MONGODB_DB = `coffee_test_${randomUUID().slice(0, 12)}`
     const dbModule = await import("@/lib/db")
     const recipeModule = await import("@/lib/recipes")
     apiKeys = await import("@/lib/api-keys")
+    personalRecipes = await import("@/lib/personal-recipes")
     closeDatabase = dbModule.closeDatabase
     getDatabase = dbModule.getDatabase
     getRecipePage = recipeModule.getRecipePage
@@ -53,6 +55,7 @@ suite("MongoDB recipe persistence", () => {
     await db.collection("likes").createIndex({ clerk_user_id: 1, recipe_id: 1 }, { unique: true })
     await db.collection("api_keys").createIndex({ clerk_user_id: 1 }, { unique: true })
     await db.collection("api_keys").createIndex({ key_hash: 1 }, { unique: true })
+    await db.collection("api_idempotency").createIndex({ clerk_user_id: 1, scope: 1, key_hash: 1 }, { unique: true })
   })
 
   afterAll(async () => {
@@ -99,5 +102,28 @@ suite("MongoDB recipe persistence", () => {
     await expect(apiKeys.authenticateApiKey(new Request("http://localhost", {
       headers: { authorization: `Bearer ${rotated.api_key}` },
     }))).resolves.toEqual({ userId: "user_api" })
+  })
+
+  it("limits personal updates and deletes to the recipe owner", async () => {
+    const db = await getDatabase()
+    const { legacy_id: _legacyId, ...seed } = SEED_RECIPES[0]
+    const inserted = await db.collection("recipes").insertOne({
+      ...seed,
+      created_by_clerk_user_id: "owner_1",
+      created_at: new Date(),
+      updated_at: new Date(),
+    })
+
+    await expect(personalRecipes.patchPersonalRecipe(inserted.insertedId.toString(), { name: "Ajena" }, "owner_2"))
+      .rejects.toBeInstanceOf(personalRecipes.PersonalRecipeNotFoundError)
+    await personalRecipes.patchPersonalRecipe(inserted.insertedId.toString(), { name: "Propia", image: null }, "owner_1")
+    expect(await db.collection("recipes").findOne({ _id: inserted.insertedId })).toMatchObject({ name: "Propia" })
+
+    await db.collection("likes").insertOne({ clerk_user_id: "fan", recipe_id: inserted.insertedId, created_at: new Date() })
+    await db.collection("saved_recipes").insertOne({ clerk_user_id: "fan", recipe_id: inserted.insertedId, created_at: new Date() })
+    await personalRecipes.deletePersonalRecipe(inserted.insertedId.toString(), "owner_1")
+    expect(await db.collection("recipes").findOne({ _id: inserted.insertedId })).toBeNull()
+    expect(await db.collection("likes").countDocuments({ recipe_id: inserted.insertedId })).toBe(0)
+    expect(await db.collection("saved_recipes").countDocuments({ recipe_id: inserted.insertedId })).toBe(0)
   })
 })

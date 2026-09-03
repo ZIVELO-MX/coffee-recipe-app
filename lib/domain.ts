@@ -41,6 +41,29 @@ export const recipeInputSchema = z.object({
 export type RecipeInput = z.infer<typeof recipeInputSchema>
 export const personalRecipeInputSchema = recipeInputSchema.omit({ author: true }).strict()
 export type PersonalRecipeInput = z.infer<typeof personalRecipeInputSchema>
+export const personalRecipePatchSchema = personalRecipeInputSchema
+  .partial()
+  .extend({ image: recipeInputSchema.shape.image.nullable().optional() })
+  .strict()
+  .refine((value) => Object.keys(value).length > 0, "At least one field is required")
+export type PersonalRecipePatch = z.infer<typeof personalRecipePatchSchema>
+
+export const bulkRecipeCreateSchema = z.object({
+  items: z.array(z.unknown()).min(1).max(50),
+}).strict()
+
+export const bulkRecipePatchItemSchema = z.object({
+  id: z.string(),
+  changes: personalRecipePatchSchema,
+}).strict()
+
+export const bulkRecipePatchSchema = z.object({
+  items: z.array(z.unknown()).min(1).max(50),
+}).strict()
+
+export const bulkRecipeDeleteSchema = z.object({
+  ids: z.array(z.unknown()).min(1).max(50),
+}).strict()
 export type RecipeStep = z.infer<typeof recipeStepSchema>
 export type Method = RecipeInput["method"]
 export type RecipeGrind = RecipeInput["grind"]

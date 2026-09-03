@@ -1120,6 +1120,21 @@ The body matches the recipe input schema without `author`. Koda resolves the
 owner from the hashed key, derives the author from Clerk, stores
 `created_by_clerk_user_id` for provenance, and publishes the recipe.
 
+The same key can update or permanently delete only recipes owned by its Clerk
+user. Public reads remain unchanged:
+
+``` text
+PATCH /api/recipes/:id
+DELETE /api/recipes/:id
+POST /api/recipes/bulk
+PATCH /api/recipes/bulk
+DELETE /api/recipes/bulk
+```
+
+Bulk requests accept at most 50 elements and return an ordered result for each
+item. Creation endpoints accept an optional `Idempotency-Key`, scoped to the
+user and endpoint for 24 hours.
+
 API key documents live in `api_keys` with unique indexes on
 `clerk_user_id` and `key_hash`. Only the SHA-256 hash, last four characters,
 and lifecycle timestamps are stored. A user has one non-expiring active key;
@@ -1139,6 +1154,7 @@ The following should not influence initial architecture beyond avoiding
 obvious dead ends:
 
 -   Recipe creation/editing UI
+-   Recipe image upload and bucket integration
 -   Comments
 -   Reviews
 -   Star ratings

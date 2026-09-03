@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { recipeInputSchema, validateTimeline } from "@/lib/domain"
+import { personalRecipePatchSchema, recipeInputSchema, validateTimeline } from "@/lib/domain"
 import { parseRecipeFilters } from "@/lib/recipes"
 import { SEED_RECIPES } from "@/scripts/seed-data"
 
@@ -37,5 +37,18 @@ describe("recipe seed", () => {
     expect(recipeInputSchema.safeParse({ ...recipe, image: "https://images.example.com/v60.webp" }).success).toBe(true)
     expect(recipeInputSchema.safeParse({ ...recipe, image: "not-a-url" }).success).toBe(false)
     expect(recipeInputSchema.safeParse({ ...recipe, image: "javascript:alert(1)" }).success).toBe(false)
+  })
+})
+
+describe("personal recipe patches", () => {
+  it("accepts partial editable fields and explicit image removal", () => {
+    expect(personalRecipePatchSchema.safeParse({ name: "Nuevo nombre" }).success).toBe(true)
+    expect(personalRecipePatchSchema.safeParse({ image: null }).success).toBe(true)
+  })
+
+  it("rejects empty patches, authors and internal ownership fields", () => {
+    expect(personalRecipePatchSchema.safeParse({}).success).toBe(false)
+    expect(personalRecipePatchSchema.safeParse({ author: "Otra persona" }).success).toBe(false)
+    expect(personalRecipePatchSchema.safeParse({ created_by_clerk_user_id: "user_2" }).success).toBe(false)
   })
 })
