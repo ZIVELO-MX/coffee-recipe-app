@@ -43,8 +43,19 @@ const timemoreC3: BrewmarkGrinder = {
 afterEach(() => vi.unstubAllGlobals())
 
 describe("BrewMark grinder conversion", () => {
-  it("converts the authored Encore ESP setting to an actionable C3 click", () => {
+  it("converts authored Encore ESP settings using the shared grind curve", () => {
+    expect(convertGrindSetting(encoreEsp, 18, timemoreC3)).toBe(20)
+    expect(convertGrindSetting(encoreEsp, 30, timemoreC3)).toBe(29)
+  })
+
+  it("rounds the equivalent C3 setting to an actionable click", () => {
+    // Equal numbers do not imply equal scales: this is the rounded result of
+    // converting Encore ESP 28 through the shared BrewMark grind index.
     expect(convertGrindSetting(encoreEsp, 28, timemoreC3)).toBe(28)
+  })
+
+  it("preserves useful precision when converting clicks to a numbered dial", () => {
+    expect(convertGrindSetting(timemoreC3, 28, encoreEsp)).toBe(28.5)
   })
 
   it("returns the source setting for the same grinder", () => {
