@@ -1,7 +1,8 @@
 import { z } from "zod"
-import { personalRecipeInputSchema } from "@/lib/domain"
+import { personalRecipeInputSchema, personalRecipePatchSchema } from "@/lib/domain"
 
 const { $schema: _jsonSchema, ...recipeCreateInput } = z.toJSONSchema(personalRecipeInputSchema)
+const { $schema: _patchJsonSchema, ...recipePatchInput } = z.toJSONSchema(personalRecipePatchSchema)
 
 const errorResponse = {
   description: "Error de la solicitud",
@@ -23,12 +24,21 @@ const recipeFilters = [
   { name: "pageSize", schema: { type: "integer", minimum: 1, maximum: 50, default: 20 } },
 ].map((parameter) => ({ in: "query", required: false, ...parameter }))
 
+const personalApiKeySecurity = [{ PersonalApiKey: [] }]
+const idempotencyHeader = {
+  name: "Idempotency-Key",
+  in: "header",
+  required: false,
+  description: "Clave ASCII de 1 a 128 caracteres. Protege la creación contra reintentos durante 24 horas.",
+  schema: { type: "string", minLength: 1, maxLength: 128 },
+}
+
 export const OPENAPI_DOCUMENT = {
   openapi: "3.1.0",
   info: {
     title: "Koda Coffee API",
     version: "0.1.0",
-    description: "API pública para consultar molinos y leer o crear recetas de café.",
+    description: "API pública para consultar molinos y administrar recetas de café propias.",
   },
   servers: [{ url: "/", description: "Servidor actual" }],
   paths: {
@@ -50,7 +60,8 @@ export const OPENAPI_DOCUMENT = {
         operationId: "createRecipe",
         summary: "Crea y publica una receta",
         description: "El autor se obtiene del perfil asociado a la API key y no se acepta en el body.",
-        security: [{ PersonalApiKey: [] }],
+        security: personalApiKeySecurity,
+        parameters: [idempotencyHeader],
         requestBody: {
           required: true,
           content: { "application/json": { schema: { $ref: "#/components/schemas/RecipeCreateInput" } } },
@@ -62,6 +73,7 @@ export const OPENAPI_DOCUMENT = {
           },
           "400": errorResponse,
           "401": errorResponse,
+          "409": errorResponse,
           "503": errorResponse,
         },
       },
@@ -83,6 +95,59 @@ export const OPENAPI_DOCUMENT = {
           "404": errorResponse,
           "503": errorResponse,
         },
+      },
+      patch: {
+        operationId: "updateOwnRecipe",
+        summary: "Actualiza parcialmente una receta propia",
+        security: personalApiKeySecurity,
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { $ref: "#/components/schemas/RecipePatchInput" } } },
+        },
+        responses: {
+          "200": { description: "Receta actualizada", content: { "application/json": { schema: { $ref: "#/components/schemas/RecipeUpdated" } } } },
+          "400": errorResponse,
+          "401": errorResponse,
+          "404": errorResponse,
+          "503": errorResponse,
+        },
+      },
+      delete: {
+        operationId: "deleteOwnRecipe",
+        summary: "Elimina definitivamente una receta propia",
+        security: personalApiKeySecurity,
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: {
+          "204": { description: "Receta eliminada" },
+          "401": errorResponse,
+          "404": errorResponse,
+          "503": errorResponse,
+        },
+      },
+    },
+    "/api/recipes/bulk": {
+      post: {
+        operationId: "createRecipesBulk",
+        summary: "Crea hasta 50 recetas",
+        security: personalApiKeySecurity,
+        parameters: [idempotencyHeader],
+        requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/BulkRecipeCreateRequest" } } } },
+        responses: { "200": { description: "Resultados por elemento", content: { "application/json": { schema: { $ref: "#/components/schemas/BulkRecipeResponse" } } } }, "400": errorResponse, "401": errorResponse, "409": errorResponse, "503": errorResponse },
+      },
+      patch: {
+        operationId: "updateRecipesBulk",
+        summary: "Actualiza parcialmente hasta 50 recetas propias",
+        security: personalApiKeySecurity,
+        requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/BulkRecipePatchRequest" } } } },
+        responses: { "200": { description: "Resultados por elemento", content: { "application/json": { schema: { $ref: "#/components/schemas/BulkRecipeResponse" } } } }, "400": errorResponse, "401": errorResponse, "503": errorResponse },
+      },
+      delete: {
+        operationId: "deleteRecipesBulk",
+        summary: "Elimina definitivamente hasta 50 recetas propias",
+        security: personalApiKeySecurity,
+        requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/BulkRecipeDeleteRequest" } } } },
+        responses: { "200": { description: "Resultados por elemento", content: { "application/json": { schema: { $ref: "#/components/schemas/BulkRecipeResponse" } } } }, "400": errorResponse, "401": errorResponse, "503": errorResponse },
       },
     },
     "/api/grinders": {
@@ -116,11 +181,72 @@ export const OPENAPI_DOCUMENT = {
         ...recipeCreateInput,
         description: "Receta sin autor; Koda lo deriva del dueño de la API key.",
       },
+      RecipePatchInput: {
+        ...recipePatchInput,
+        minProperties: 1,
+        description: "Campos editables de una receta; requiere al menos uno y no permite cambiar el autor.",
+      },
       RecipeCreated: {
         type: "object",
         additionalProperties: false,
         required: ["id"],
         properties: { id: { type: "string", description: "ObjectId de la receta" } },
+      },
+      RecipeUpdated: {
+        type: "object",
+        additionalProperties: false,
+        required: ["id", "updated"],
+        properties: { id: { type: "string" }, updated: { type: "boolean", const: true } },
+      },
+      BulkRecipeCreateRequest: {
+        type: "object",
+        additionalProperties: false,
+        required: ["items"],
+        properties: { items: { type: "array", minItems: 1, maxItems: 50, items: { $ref: "#/components/schemas/RecipeCreateInput" } } },
+      },
+      BulkRecipePatchRequest: {
+        type: "object",
+        additionalProperties: false,
+        required: ["items"],
+        properties: {
+          items: {
+            type: "array",
+            minItems: 1,
+            maxItems: 50,
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["id", "changes"],
+              properties: { id: { type: "string" }, changes: { $ref: "#/components/schemas/RecipePatchInput" } },
+            },
+          },
+        },
+      },
+      BulkRecipeDeleteRequest: {
+        type: "object",
+        additionalProperties: false,
+        required: ["ids"],
+        properties: { ids: { type: "array", minItems: 1, maxItems: 50, uniqueItems: true, items: { type: "string" } } },
+      },
+      BulkRecipeResponse: {
+        type: "object",
+        additionalProperties: false,
+        required: ["results", "summary"],
+        properties: {
+          results: { type: "array", items: { $ref: "#/components/schemas/BulkRecipeResult" } },
+          summary: {
+            type: "object",
+            additionalProperties: false,
+            required: ["requested", "succeeded", "failed"],
+            properties: { requested: { type: "integer" }, succeeded: { type: "integer" }, failed: { type: "integer" } },
+          },
+        },
+      },
+      BulkRecipeResult: {
+        oneOf: [
+          { type: "object", additionalProperties: false, required: ["index", "ok", "id"], properties: { index: { type: "integer" }, ok: { type: "boolean", const: true }, id: { type: "string" } } },
+          { type: "object", additionalProperties: false, required: ["index", "ok", "error"], properties: { index: { type: "integer" }, ok: { type: "boolean", const: false }, id: { type: "string" }, error: { $ref: "#/components/schemas/ErrorDetail" } } },
+        ],
       },
       GrindSetting: {
         type: "object",
@@ -210,15 +336,16 @@ export const OPENAPI_DOCUMENT = {
         additionalProperties: false,
         required: ["error"],
         properties: {
-          error: {
-            type: "object",
-            required: ["code", "message"],
-            properties: {
-              code: { type: "string" },
-              message: { type: "string" },
-              fields: { type: "object", additionalProperties: { type: "array", items: { type: "string" } } },
-            },
-          },
+          error: { $ref: "#/components/schemas/ErrorDetail" },
+        },
+      },
+      ErrorDetail: {
+        type: "object",
+        required: ["code", "message"],
+        properties: {
+          code: { type: "string" },
+          message: { type: "string" },
+          fields: { type: "object", additionalProperties: { type: "array", items: { type: "string" } } },
         },
       },
     },

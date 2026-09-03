@@ -2,15 +2,12 @@ import { auth } from "@clerk/nextjs/server"
 import { NextRequest, NextResponse } from "next/server"
 import { ZodError } from "zod"
 import { revalidatePath } from "next/cache"
-import { authenticateApiKey, InvalidApiKeyError } from "@/lib/api-keys"
-import {
-  BrewmarkUnavailableError,
-  GrinderNotFoundError,
-  InvalidGrindSettingError,
-} from "@/lib/brewmark"
-import { createRecipe } from "@/lib/create-recipe"
+import { authenticateApiKey } from "@/lib/api-keys"
 import { personalRecipeInputSchema } from "@/lib/domain"
 import { jsonError } from "@/lib/http"
+import { runIdempotentCreation } from "@/lib/idempotency"
+import { createPersonalRecipe } from "@/lib/personal-recipes"
+import { recipeMutationErrorResponse } from "@/lib/recipe-api-errors"
 import { getRecipePage, parseRecipeFilters } from "@/lib/recipes"
 import { getViewerDisplayName } from "@/lib/viewer"
 
@@ -33,28 +30,17 @@ export async function POST(request: NextRequest) {
       return jsonError("invalid_recipe", "La receta no es válida.", 400, parsed.error.flatten().fieldErrors)
     }
     const author = await getViewerDisplayName(userId)
-    const id = await createRecipe(
-      { ...parsed.data, author },
-      { createdByClerkUserId: userId },
-    )
+    const result = await runIdempotentCreation({
+      request,
+      userId,
+      scope: "POST:/api/recipes",
+      payload: parsed.data,
+      resourceCount: 1,
+      execute: async ([id]) => ({ id: await createPersonalRecipe(parsed.data, userId, author, { id }) }),
+    })
     revalidatePath("/recipes")
-    return NextResponse.json({ id }, { status: 201 })
+    return NextResponse.json(result, { status: 201 })
   } catch (error) {
-    if (error instanceof InvalidApiKeyError) {
-      const response = jsonError("invalid_api_key", "La API key no es válida.", 401)
-      response.headers.set("WWW-Authenticate", "Bearer")
-      return response
-    }
-    if (error instanceof SyntaxError) {
-      return jsonError("invalid_json", "El cuerpo debe ser JSON válido.", 400)
-    }
-    if (error instanceof GrinderNotFoundError || error instanceof InvalidGrindSettingError) {
-      return jsonError("invalid_recipe_grind", "La molienda original no es válida para ese molino.", 400)
-    }
-    if (error instanceof BrewmarkUnavailableError) {
-      return jsonError("brewmark_unavailable", "No se pudo validar la molienda con BrewMark.", 503)
-    }
-    console.error("recipe_api.create_failed", { error })
-    return jsonError("recipe_create_unavailable", "No se pudo crear la receta.", 503)
+    return recipeMutationErrorResponse(error, "recipe_api.create_failed", "No se pudo crear la receta.")
   }
 }

@@ -5,6 +5,7 @@ async function main() {
   const db = await getDatabase()
   await db.collection("recipes").createIndex({ name: "text", author: "text" }, { weights: { name: 5, author: 1 } })
   await db.collection("recipes").createIndex({ method: 1, _id: -1 })
+  await db.collection("recipes").createIndex({ created_by_clerk_user_id: 1, _id: 1 })
   await db.collection("likes").createIndex({ clerk_user_id: 1, recipe_id: 1 }, { unique: true })
   await db.collection("likes").createIndex({ recipe_id: 1 })
   await db.collection("saved_recipes").createIndex({ clerk_user_id: 1, recipe_id: 1 }, { unique: true })
@@ -12,6 +13,11 @@ async function main() {
   await db.collection("user_preferences").createIndex({ clerk_user_id: 1 }, { unique: true })
   await db.collection("api_keys").createIndex({ clerk_user_id: 1 }, { unique: true })
   await db.collection("api_keys").createIndex({ key_hash: 1 }, { unique: true })
+  await db.collection("api_idempotency").createIndex(
+    { clerk_user_id: 1, scope: 1, key_hash: 1 },
+    { unique: true },
+  )
+  await db.collection("api_idempotency").createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 })
   console.log("MongoDB indexes created")
 }
 

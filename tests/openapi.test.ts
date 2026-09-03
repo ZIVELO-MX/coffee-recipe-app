@@ -8,9 +8,13 @@ describe("OpenAPI document", () => {
     expect(Object.keys(OPENAPI_DOCUMENT.paths)).toEqual([
       "/api/recipes",
       "/api/recipes/{id}",
+      "/api/recipes/bulk",
       "/api/grinders",
     ])
     expect(OPENAPI_DOCUMENT.paths["/api/recipes"].post.security).toEqual([{ PersonalApiKey: [] }])
+    expect(OPENAPI_DOCUMENT.paths["/api/recipes"].post.parameters).toContainEqual(expect.objectContaining({ name: "Idempotency-Key" }))
+    expect(OPENAPI_DOCUMENT.paths["/api/recipes/{id}"].patch.security).toEqual([{ PersonalApiKey: [] }])
+    expect(OPENAPI_DOCUMENT.paths["/api/recipes/bulk"].post.security).toEqual([{ PersonalApiKey: [] }])
     expect(OPENAPI_DOCUMENT.components.securitySchemes.PersonalApiKey).toMatchObject({ type: "http", scheme: "bearer" })
   })
 

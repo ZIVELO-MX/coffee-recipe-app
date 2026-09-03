@@ -1,8 +1,13 @@
 import { auth } from "@clerk/nextjs/server"
 import { ObjectId } from "mongodb"
 import { NextRequest, NextResponse } from "next/server"
+import { revalidatePath } from "next/cache"
+import { authenticateApiKey } from "@/lib/api-keys"
 import { BrewmarkUnavailableError, GrinderNotFoundError } from "@/lib/brewmark"
+import { personalRecipePatchSchema } from "@/lib/domain"
 import { jsonError } from "@/lib/http"
+import { deletePersonalRecipe, patchPersonalRecipe } from "@/lib/personal-recipes"
+import { recipeMutationErrorResponse } from "@/lib/recipe-api-errors"
 import { getRecipeById } from "@/lib/recipes"
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -25,5 +30,36 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     }
     console.error("recipe.get_failed", { id, error })
     return jsonError("recipe_unavailable", "No se pudo cargar la receta.", 503)
+  }
+}
+
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params
+  try {
+    const { userId } = await authenticateApiKey(request)
+    const parsed = personalRecipePatchSchema.safeParse(await request.json())
+    if (!parsed.success) {
+      return jsonError("invalid_recipe", "La receta no es válida.", 400, parsed.error.flatten().fieldErrors)
+    }
+    await patchPersonalRecipe(id, parsed.data, userId)
+    revalidatePath("/recipes")
+    revalidatePath(`/recipes/${id}`)
+    return NextResponse.json({ id, updated: true })
+  } catch (error) {
+    return recipeMutationErrorResponse(error, "recipe_api.update_failed", "No se pudo actualizar la receta.")
+  }
+}
+
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params
+  try {
+    const { userId } = await authenticateApiKey(request)
+    await deletePersonalRecipe(id, userId)
+    revalidatePath("/recipes")
+    revalidatePath("/saved")
+    revalidatePath(`/recipes/${id}`)
+    return new Response(null, { status: 204 })
+  } catch (error) {
+    return recipeMutationErrorResponse(error, "recipe_api.delete_failed", "No se pudo eliminar la receta.")
   }
 }
