@@ -3,17 +3,28 @@
 import { useAuth, useClerk } from "@clerk/nextjs"
 import { useEffect, useState, useTransition } from "react"
 import { updatePreferences } from "@/app/actions"
-import type { UserPreferences, ViewerUser } from "@/lib/domain"
+import type { ApiKeyStatus, UserPreferences, ViewerUser } from "@/lib/domain"
+import { ApiKeyDialog } from "./api-key-dialog"
 import { GrinderSelector, type GrinderOption } from "./grinder-selector"
 import { ScreenPerfil } from "./screen-perfil"
 
 const PREFERENCES_KEY = "coffee-recipe-guest-preferences:v2"
 
-export function ProfileClient({ user, initialPreferences }: { user: ViewerUser; initialPreferences: UserPreferences }) {
+export function ProfileClient({
+  user,
+  initialPreferences,
+  initialApiKeyStatus,
+}: {
+  user: ViewerUser
+  initialPreferences: UserPreferences
+  initialApiKeyStatus: ApiKeyStatus
+}) {
   const { isSignedIn } = useAuth()
   const { signOut } = useClerk()
   const [preferences, setPreferences] = useState(initialPreferences)
   const [grinderOpen, setGrinderOpen] = useState(false)
+  const [apiKeyOpen, setApiKeyOpen] = useState(false)
+  const [apiKeyStatus, setApiKeyStatus] = useState(initialApiKeyStatus)
   const [message, setMessage] = useState("")
   const [, startTransition] = useTransition()
 
@@ -63,10 +74,20 @@ export function ProfileClient({ user, initialPreferences }: { user: ViewerUser; 
         tempUnit={preferences.temperature_unit}
         onOpenGrinder={() => setGrinderOpen(true)}
         onToggleUnit={(temperature_unit) => persist({ ...preferences, temperature_unit })}
+        apiKeyStatus={apiKeyStatus}
+        onOpenApiKey={() => setApiKeyOpen(true)}
         onLogout={() => void signOut({ redirectUrl: "/recipes" })}
       />
       {message && <p role="status" className="mx-4 -mt-28 rounded-2xl border border-border bg-card p-3 text-center text-xs text-muted-foreground">{message}</p>}
       {grinderOpen && <GrinderSelector selected={preferences.default_grinder_id} onSelect={selectGrinder} onClose={() => setGrinderOpen(false)} />}
+      {!user.guest && (
+        <ApiKeyDialog
+          open={apiKeyOpen}
+          onOpenChange={setApiKeyOpen}
+          status={apiKeyStatus}
+          onStatusChange={setApiKeyStatus}
+        />
+      )}
     </>
   )
 }

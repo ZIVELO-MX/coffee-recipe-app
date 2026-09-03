@@ -60,3 +60,18 @@ test("an authenticated user can persist a saved recipe", async ({ page }) => {
   await page.goto("/saved")
   await expect(page.getByRole("link", { name: /V60 Regular/ })).toBeVisible()
 })
+
+test("an authenticated user can create a personal recipe API key", async ({ page }) => {
+  test.skip(!process.env.CLERK_E2E_USER_EMAIL, "CLERK_E2E_USER_EMAIL is not configured")
+  await setupClerkTestingToken({ page })
+  await page.goto("/profile")
+  await clerk.signIn({ page, emailAddress: process.env.CLERK_E2E_USER_EMAIL! })
+  await page.goto("/profile")
+
+  await page.getByRole("button", { name: /API key.*Crear recetas desde la API/ }).click()
+  const dialog = page.getByRole("dialog", { name: "API key para recetas" })
+  await expect(dialog).toBeVisible()
+  await dialog.getByRole("button", { name: "Crear API key" }).click()
+  await expect(dialog.getByLabel("Nueva API key")).toHaveValue(/^koda_sk_[A-Za-z0-9_-]{43}$/)
+  await expect(dialog.getByText("Koda no volverá a mostrar esta clave")).toBeVisible()
+})

@@ -1007,9 +1007,10 @@ that page.
 
 There is **no recipe creation UI** in the MVP.
 
-Recipes are created/managed through an API.
-
-The administrative API contract is not yet finalized.
+Authenticated users create recipes through the API using a personal API key
+issued from `Perfil → Desarrolladores`. A valid recipe is published
+immediately. The visible author is derived from the Clerk profile associated
+with the key and cannot be overridden by the API payload.
 
 ### Recipe storage
 
@@ -1095,26 +1096,37 @@ stays in MongoDB.
 
 ## 28. Initial API surface
 
-The exact recipe-management API is intentionally deferred until the data
-model is stable.
-
-The expected minimal public read surface is:
+The public API contract is exposed as OpenAPI 3.1 at:
 
 ``` text
-GET /recipes
-GET /recipes/:id
+GET /api/openapi.json
 ```
 
-The future protected management surface will likely require operations
-equivalent to:
+The public read surface is:
 
 ``` text
-POST   /recipes
-PUT    /recipes/:id
-DELETE /recipes/:id
+GET /api/recipes
+GET /api/recipes/:id
 ```
 
-These routes are **directional, not yet a finalized API contract**.
+Authenticated recipe creation uses a personal Bearer API key:
+
+``` text
+POST /api/recipes
+Authorization: Bearer koda_sk_...
+```
+
+The body matches the recipe input schema without `author`. Koda resolves the
+owner from the hashed key, derives the author from Clerk, stores
+`created_by_clerk_user_id` for provenance, and publishes the recipe.
+
+API key documents live in `api_keys` with unique indexes on
+`clerk_user_id` and `key_hash`. Only the SHA-256 hash, last four characters,
+and lifecycle timestamps are stored. A user has one non-expiring active key;
+rotation invalidates the previous key immediately.
+
+Administrative PUT/DELETE operations remain under `/api/admin/recipes` and
+are not part of the public OpenAPI document.
 
 Like and saved-recipe operations will be authenticated and defined
 separately.
@@ -1127,7 +1139,6 @@ The following should not influence initial architecture beyond avoiding
 obvious dead ends:
 
 -   Recipe creation/editing UI
--   User-submitted recipes
 -   Comments
 -   Reviews
 -   Star ratings

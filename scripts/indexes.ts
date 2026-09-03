@@ -10,6 +10,8 @@ async function main() {
   await db.collection("saved_recipes").createIndex({ clerk_user_id: 1, recipe_id: 1 }, { unique: true })
   await db.collection("saved_recipes").createIndex({ clerk_user_id: 1, created_at: -1 })
   await db.collection("user_preferences").createIndex({ clerk_user_id: 1 }, { unique: true })
+  await db.collection("api_keys").createIndex({ clerk_user_id: 1 }, { unique: true })
+  await db.collection("api_keys").createIndex({ key_hash: 1 }, { unique: true })
   console.log("MongoDB indexes created")
 }
 
