@@ -35,11 +35,13 @@ suite("MongoDB recipe persistence", () => {
   let getDatabase: typeof import("@/lib/db")["getDatabase"]
   let getRecipePage: typeof import("@/lib/recipes")["getRecipePage"]
   let getSavedRecipes: typeof import("@/lib/recipes")["getSavedRecipes"]
+  let apiKeys: typeof import("@/lib/api-keys")
 
   beforeAll(async () => {
     process.env.MONGODB_DB = `coffee_test_${randomUUID().slice(0, 12)}`
     const dbModule = await import("@/lib/db")
     const recipeModule = await import("@/lib/recipes")
+    apiKeys = await import("@/lib/api-keys")
     closeDatabase = dbModule.closeDatabase
     getDatabase = dbModule.getDatabase
     getRecipePage = recipeModule.getRecipePage
@@ -49,6 +51,8 @@ suite("MongoDB recipe persistence", () => {
     await db.collection("recipes").insertMany(SEED_RECIPES.map(({ legacy_id, ...recipe }) => ({ ...recipe, legacy_id, created_at: now, updated_at: now })))
     await db.collection("saved_recipes").createIndex({ clerk_user_id: 1, recipe_id: 1 }, { unique: true })
     await db.collection("likes").createIndex({ clerk_user_id: 1, recipe_id: 1 }, { unique: true })
+    await db.collection("api_keys").createIndex({ clerk_user_id: 1 }, { unique: true })
+    await db.collection("api_keys").createIndex({ key_hash: 1 }, { unique: true })
   })
 
   afterAll(async () => {
@@ -76,5 +80,24 @@ suite("MongoDB recipe persistence", () => {
     expect(saved).toHaveLength(1)
     expect(saved[0]).toMatchObject({ viewer_saved: true, viewer_liked: true, like_count: 2 })
     await expect(db.collection("saved_recipes").insertOne({ clerk_user_id: "user_a", recipe_id: recipe?._id, created_at: new Date() })).rejects.toThrow()
+  })
+
+  it("stores API keys as hashes and invalidates the previous key on rotation", async () => {
+    const first = await apiKeys.createApiKeyForUser("user_api")
+    await expect(apiKeys.authenticateApiKey(new Request("http://localhost", {
+      headers: { authorization: `Bearer ${first.api_key}` },
+    }))).resolves.toEqual({ userId: "user_api" })
+
+    const stored = await (await getDatabase()).collection("api_keys").findOne({ clerk_user_id: "user_api" })
+    expect(stored?.key_hash).toBe(apiKeys.hashApiKey(first.api_key))
+    expect(JSON.stringify(stored)).not.toContain(first.api_key)
+
+    const rotated = await apiKeys.rotateApiKeyForUser("user_api")
+    await expect(apiKeys.authenticateApiKey(new Request("http://localhost", {
+      headers: { authorization: `Bearer ${first.api_key}` },
+    }))).rejects.toBeInstanceOf(apiKeys.InvalidApiKeyError)
+    await expect(apiKeys.authenticateApiKey(new Request("http://localhost", {
+      headers: { authorization: `Bearer ${rotated.api_key}` },
+    }))).resolves.toEqual({ userId: "user_api" })
   })
 })

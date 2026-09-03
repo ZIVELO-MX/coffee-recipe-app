@@ -39,6 +39,8 @@ export const recipeInputSchema = z.object({
 })
 
 export type RecipeInput = z.infer<typeof recipeInputSchema>
+export const personalRecipeInputSchema = recipeInputSchema.omit({ author: true }).strict()
+export type PersonalRecipeInput = z.infer<typeof personalRecipeInputSchema>
 export type RecipeStep = z.infer<typeof recipeStepSchema>
 export type Method = RecipeInput["method"]
 export type RecipeGrind = RecipeInput["grind"]
@@ -104,6 +106,20 @@ export type ViewerUser = {
   guest?: boolean
 }
 
+export type ApiKeyStatus =
+  | { has_key: false }
+  | {
+      has_key: true
+      last_four: string
+      created_at: string
+      rotated_at: string | null
+    }
+
+export type IssuedApiKey = {
+  api_key: string
+  status: Extract<ApiKeyStatus, { has_key: true }>
+}
+
 const rangeTokenSchema = z.string().regex(/^\d+-\d+$|^\d+-(?:plus|less)$/)
 
 export const recipeFiltersSchema = z.object({
@@ -126,7 +142,7 @@ export type RecipePage = {
   pageSize: number
 }
 
-export type ActionErrorCode = "AUTH_REQUIRED" | "NOT_FOUND" | "INVALID_INPUT" | "DB_UNAVAILABLE"
+export type ActionErrorCode = "AUTH_REQUIRED" | "NOT_FOUND" | "INVALID_INPUT" | "CONFLICT" | "DB_UNAVAILABLE"
 
 export type ActionResult<T> =
   | { ok: true; data: T }

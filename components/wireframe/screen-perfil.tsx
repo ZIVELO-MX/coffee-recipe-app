@@ -1,10 +1,10 @@
 "use client"
 
-import { ChevronRight, LogIn, LogOut, Settings2 } from "lucide-react"
+import { ChevronRight, Code2, KeyRound, LogIn, LogOut, Settings2 } from "lucide-react"
 import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs"
 import Image from "next/image"
 import { getAvatar } from "@/lib/avatars"
-import type { ViewerUser } from "@/lib/domain"
+import type { ApiKeyStatus, ViewerUser } from "@/lib/domain"
 import { InstallApp } from "@/components/pwa/install-app"
 
 export function ScreenPerfil({
@@ -13,6 +13,8 @@ export function ScreenPerfil({
   tempUnit,
   onOpenGrinder,
   onToggleUnit,
+  apiKeyStatus,
+  onOpenApiKey,
   onLogout,
 }: {
   user: ViewerUser
@@ -20,6 +22,8 @@ export function ScreenPerfil({
   tempUnit: "C" | "F"
   onOpenGrinder: () => void
   onToggleUnit: (unit: "C" | "F") => void
+  apiKeyStatus: ApiKeyStatus
+  onOpenApiKey: () => void
   onLogout: () => void
 }) {
   const avatar = getAvatar(user.avatarId)
@@ -97,6 +101,34 @@ export function ScreenPerfil({
           <InstallApp />
         </div>
       </section>
+
+      {!user.guest && (
+        <section className="flex flex-col gap-3">
+          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+            <Code2 className="size-4" aria-hidden="true" />
+            Desarrolladores
+          </p>
+          <button
+            type="button"
+            onClick={onOpenApiKey}
+            className="flex w-full items-center justify-between gap-3 rounded-3xl border border-border bg-card p-4 text-left transition-colors hover:bg-secondary/50"
+          >
+            <span className="flex min-w-0 items-center gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-secondary text-primary">
+                <KeyRound className="size-5" aria-hidden="true" />
+              </span>
+              <span className="flex min-w-0 flex-col gap-0.5">
+                <span className="text-sm font-semibold text-foreground">API key</span>
+                <span className="text-xs text-muted-foreground">Crear recetas desde la API</span>
+              </span>
+            </span>
+            <span className="inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+              {apiKeyStatus.has_key ? `•••• ${apiKeyStatus.last_four}` : "Sin configurar"}
+              <ChevronRight className="size-4" aria-hidden="true" />
+            </span>
+          </button>
+        </section>
+      )}
 
       {/* Cuenta */}
       <section className="flex flex-col gap-3">
