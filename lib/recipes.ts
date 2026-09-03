@@ -1,6 +1,13 @@
 import { ObjectId, type Document, type Filter } from "mongodb"
 import { getDatabase } from "@/lib/db"
 import {
+  BrewmarkUnavailableError,
+  convertGrindSetting,
+  getGrinderCatalog,
+  GrinderNotFoundError,
+  grinderName,
+} from "@/lib/brewmark"
+import {
   recipeFiltersSchema,
   type RecipeFilters,
   type RecipePage,
@@ -65,13 +72,61 @@ function serializeRecipe(document: Document): RecipeView {
     coffee_g: document.coffee_g,
     water_ml: document.water_ml,
     temperature_c: document.temperature_c,
-    grind: document.grind,
+    grind: {
+      source: {
+        grinder_id: document.grind.grinder_id,
+        grinder_name: null,
+        setting: document.grind.setting,
+        setting_unit: null,
+      },
+    },
     preparation: document.preparation ?? [],
     steps: document.steps ?? [],
     total_seconds: document.total_seconds ?? totalSeconds(document.steps ?? []),
     like_count: 0,
     viewer_liked: false,
     viewer_saved: false,
+  }
+}
+
+async function resolveRecipeGrinds(recipes: RecipeView[], targetGrinderId?: number): Promise<RecipeView[]> {
+  if (!recipes.length) return recipes
+  try {
+    const { grinders } = await getGrinderCatalog()
+    const byId = new Map(grinders.map((grinder) => [grinder.id, grinder]))
+    const target = targetGrinderId === undefined ? undefined : byId.get(targetGrinderId)
+    if (targetGrinderId !== undefined && !target) {
+      throw new GrinderNotFoundError(`Unknown grinder ${targetGrinderId}`)
+    }
+    return recipes.map((recipe) => {
+      const source = byId.get(recipe.grind.source.grinder_id)
+      const sourceView = source
+        ? {
+            ...recipe.grind.source,
+            grinder_name: grinderName(source),
+            setting_unit: source.settingUnit,
+          }
+        : recipe.grind.source
+      if (!target) return { ...recipe, grind: { source: sourceView } }
+      if (!source) {
+        throw new GrinderNotFoundError(`Unknown grinder ${recipe.grind.source.grinder_id}`)
+      }
+      return {
+        ...recipe,
+        grind: {
+          source: sourceView,
+          converted: {
+            grinder_id: target.id,
+            grinder_name: grinderName(target),
+            setting: convertGrindSetting(source, recipe.grind.source.setting, target),
+            setting_unit: target.settingUnit,
+          },
+        },
+      }
+    })
+  } catch (error) {
+    if (error instanceof BrewmarkUnavailableError && targetGrinderId === undefined) return recipes
+    throw error
   }
 }
 
@@ -138,19 +193,28 @@ export async function getRecipePage(filters: RecipeFilters, userId?: string | nu
   ]
   const [result] = await db.collection("recipes").aggregate(pipeline).toArray()
   const recipes = (result?.data ?? []).map(serializeRecipe)
+  const [withViewerState, withGrinds] = await Promise.all([
+    mergeViewerState(recipes, userId),
+    resolveRecipeGrinds(recipes),
+  ])
   return {
-    data: await mergeViewerState(recipes, userId),
+    data: withViewerState.map((recipe, index) => ({ ...recipe, grind: withGrinds[index].grind })),
     total: result?.metadata?.[0]?.total ?? 0,
     page: filters.page,
     pageSize: filters.pageSize,
   }
 }
 
-export async function getRecipeById(id: string, userId?: string | null): Promise<RecipeView | null> {
+export async function getRecipeById(id: string, userId?: string | null, targetGrinderId?: number): Promise<RecipeView | null> {
   if (!ObjectId.isValid(id)) return null
   const recipe = await (await getDatabase()).collection("recipes").findOne({ _id: new ObjectId(id) })
   if (!recipe) return null
-  return (await mergeViewerState([serializeRecipe(recipe)], userId))[0]
+  const serialized = serializeRecipe(recipe)
+  const [withViewerState, withGrind] = await Promise.all([
+    mergeViewerState([serialized], userId),
+    resolveRecipeGrinds([serialized], targetGrinderId),
+  ])
+  return { ...withViewerState[0], grind: withGrind[0].grind }
 }
 
 export async function getRecipeShareData(id: string): Promise<RecipeShareData | null> {
@@ -179,5 +243,9 @@ export async function getSavedRecipes(userId: string): Promise<RecipeView[]> {
   const documents = await db.collection("recipes").find({ _id: { $in: ids } }).toArray()
   const byId = new Map(documents.map((document) => [document._id.toString(), serializeRecipe(document)]))
   const ordered = ids.map((id) => byId.get(id.toString())).filter((recipe): recipe is RecipeView => Boolean(recipe))
-  return mergeViewerState(ordered, userId)
+  const [withViewerState, withGrinds] = await Promise.all([
+    mergeViewerState(ordered, userId),
+    resolveRecipeGrinds(ordered),
+  ])
+  return withViewerState.map((recipe, index) => ({ ...recipe, grind: withGrinds[index].grind }))
 }

@@ -7,7 +7,7 @@ import type { RecipeView, UserPreferences } from "@/lib/domain"
 import { BottomNav, type Tab } from "./bottom-nav"
 import { RecipeSheet } from "./recipe-sheet"
 
-const DEFAULT_PREFERENCES: UserPreferences = { temperature_unit: "C", default_grinder_slug: "timemore-c3", default_grinder_name: "Timemore C3" }
+const DEFAULT_PREFERENCES: UserPreferences = { temperature_unit: "C", default_grinder_id: 76, default_grinder_name: "Timemore C3" }
 const RecipeOverlayContext = createContext<((recipe: RecipeView) => void) | null>(null)
 
 export function useRecipeOverlay() {

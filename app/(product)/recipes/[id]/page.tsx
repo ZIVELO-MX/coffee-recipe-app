@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server"
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { RecipeModalRoute } from "@/components/wireframe/recipe-modal-route"
+import { BrewmarkUnavailableError, GrinderNotFoundError } from "@/lib/brewmark"
 import { getUserPreferences } from "@/lib/preferences"
 import { getRecipeById, getRecipeShareData } from "@/lib/recipes"
 
@@ -22,7 +23,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function RecipePage({ params }: { params: Promise<{ id: string }> }) {
   const [{ id }, { userId }] = await Promise.all([params, auth()])
-  const [recipe, preferences] = await Promise.all([getRecipeById(id, userId), getUserPreferences(userId)])
+  const preferencesPromise = getUserPreferences(userId)
+  const recipePromise = preferencesPromise
+    .then((preferences) => getRecipeById(id, userId, preferences.default_grinder_id))
+    .catch((error) => error instanceof BrewmarkUnavailableError || error instanceof GrinderNotFoundError
+      ? getRecipeById(id, userId)
+      : Promise.reject(error))
+  const [recipe, preferences] = await Promise.all([recipePromise, preferencesPromise])
   if (!recipe) notFound()
   return <RecipeModalRoute recipe={recipe} preferences={preferences} direct />
 }

@@ -1,4 +1,5 @@
 import "./load-env"
+import { validateRecipeGrind } from "@/lib/brewmark"
 import { closeDatabase, getDatabase } from "@/lib/db"
 import { recipeInputSchema, validateTimeline } from "@/lib/domain"
 import { SEED_RECIPES } from "./seed-data"
@@ -11,6 +12,7 @@ async function main() {
     const { legacy_id, ...input } = seedRecipe
     const recipe = recipeInputSchema.parse(input)
     validateTimeline(recipe.steps)
+    await validateRecipeGrind(recipe.grind)
     const now = new Date()
     await collection.updateOne(
       { legacy_id },

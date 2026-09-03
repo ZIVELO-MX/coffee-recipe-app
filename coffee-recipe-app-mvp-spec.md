@@ -301,12 +301,16 @@ may be persisted.
 
 ## 9. Grind setting
 
-The recipe stores a normalized/general grind target.
+The recipe stores the exact grinder and setting used by its author:
 
-It does **not** store a Timemore-specific click count as its canonical
-grind value.
+``` json
+{ "grinder_id": 62, "setting": 28 }
+```
 
-The UI translates the target for the selected grinder.
+`grinder_id` is BrewMark's numeric catalog ID. Koda's backend converts
+that source setting to the user's selected grinder through BrewMark's
+universal grind-index curves. Converted settings are never stored in the
+recipe and clients never implement the conversion.
 
 Initial default grinder:
 
@@ -348,7 +352,8 @@ For the first scope, Timemore C3 can simply be the default.
 Once user sessions/preferences are implemented, the last/default grinder
 should be associated with the user.
 
-Handling missing grinder conversions is outside the initial scope.
+If BrewMark is unavailable, the canonical source grind remains readable;
+requests that require a conversion fail explicitly.
 
 ------------------------------------------------------------------------
 
@@ -613,7 +618,8 @@ Canonical conceptual shape:
   "temperature_c": 93,
 
   "grind": {
-    "target": "medium-coarse"
+    "grinder_id": 62,
+    "setting": 28
   },
 
   "preparation": [
@@ -717,15 +723,14 @@ Numeric.
 
 Fahrenheit is calculated for display.
 
-### `grind.target`
+### `grind.grinder_id`
 
-Normalized/general grind target.
+Stable numeric ID from BrewMark's grinder catalog.
 
-The exact vocabulary/scale will be finalized alongside the grinder
-conversion API.
+### `grind.setting`
 
-The canonical recipe must not contain a grinder-specific setting as its
-only grind representation.
+Exact numeric setting used by the recipe author. The API validates it
+against that grinder's range and unit.
 
 ### `preparation`
 
@@ -806,8 +811,8 @@ If the final step does not contain `end`, its `start` becomes the final
 known boundary unless the ingestion/API contract later requires an
 explicit completion boundary.
 
-The API validation layer should eventually guarantee that every recipe
-has an unambiguous completion time.
+The API validation layer guarantees that every recipe has an unambiguous
+completion time.
 
 This prevents duplicated state such as:
 
@@ -851,24 +856,20 @@ Derived from elapsed time and `steps`.
 
 ------------------------------------------------------------------------
 
-## 23. Grinder document
+## 23. Grinder catalog
 
-Initial shape:
+Grinders are resolved from BrewMark instead of being duplicated in MongoDB:
 
 ``` json
 {
-  "_id": "...",
+  "id": 76,
   "brand": "Timemore",
-  "model": "C3",
-  "slug": "timemore-c3",
-  "external_id": "..."
+  "name": "C3"
 }
 ```
 
-`external_id` is reserved for mapping a grinder to the selected external
-grinder/conversion API.
-
-The exact conversion model is intentionally not defined yet.
+Recipes and user preferences store only the numeric `id`. Names, units,
+ranges and interpolation anchors are resolved from the cached catalog.
 
 ------------------------------------------------------------------------
 
@@ -897,7 +898,7 @@ A minimal preferences document can eventually look like:
   "_id": "...",
   "clerk_user_id": "user_...",
   "temperature_unit": "C",
-  "default_grinder_id": "..."
+  "default_grinder_id": 76
 }
 ```
 
@@ -1061,8 +1062,8 @@ The grind value shown to the user is adapted to the selected grinder.
 
 Grinder selection is searchable.
 
-Persisting the user's grinder preference depends on
-sessions/authentication.
+Authenticated preferences persist the BrewMark grinder ID. Anonymous
+preferences use versioned browser session storage.
 
 ### Community
 
@@ -1141,7 +1142,6 @@ obvious dead ends:
 -   Lock-screen/background timer behavior
 -   Audio timer cues
 -   Complex simultaneous timer actions
--   Missing grinder conversion fallback
 -   Advanced grinder calibration
 -   Multiple user grinders/preferences before sessions
 -   Light mode

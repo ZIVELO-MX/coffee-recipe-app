@@ -18,12 +18,17 @@ describe("recipe filters", () => {
 
 describe("recipe seed", () => {
   it("contains valid, unambiguous recipes", () => {
-    expect(SEED_RECIPES).toHaveLength(6)
+    expect(SEED_RECIPES).toHaveLength(1)
     for (const { legacy_id, ...recipe } of SEED_RECIPES) {
       expect(legacy_id).toMatch(/^r\d+$/)
       const parsed = recipeInputSchema.parse(recipe)
       expect(validateTimeline(parsed.steps)).toEqual(parsed.steps)
     }
+  })
+
+  it("stores the author's grinder and exact setting instead of a method target", () => {
+    expect(SEED_RECIPES[0].grind).toEqual({ grinder_id: 62, setting: 28 })
+    expect(recipeInputSchema.safeParse({ ...SEED_RECIPES[0], grind: { target: "v60" } }).success).toBe(false)
   })
 
   it("accepts local and HTTPS images while rejecting unsafe protocols", () => {
