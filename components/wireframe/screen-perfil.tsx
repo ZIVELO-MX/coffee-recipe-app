@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronRight, Code2, KeyRound, LogIn, LogOut, Pencil, Settings2 } from "lucide-react"
+import { ChevronRight, Code2, KeyRound, LogIn, LogOut, Settings2 } from "lucide-react"
 import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs"
 import { AppearanceAvatar } from "./appearance-avatar"
 import type { ApiKeyStatus, Appearance, ViewerUser } from "@/lib/domain"
@@ -42,9 +42,6 @@ export function ScreenPerfil({
             className="group relative rounded-full outline-none transition-transform active:scale-[0.97] focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
             <AppearanceAvatar appearance={avatar} size="lg" className="glow-accent size-20 transition-transform group-hover:scale-[1.03]" />
-            <span className="absolute bottom-0 right-0 flex size-7 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground">
-              <Pencil className="size-3.5" aria-hidden="true" />
-            </span>
           </button>
         )}
         <div>
