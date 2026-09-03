@@ -67,8 +67,10 @@ devuelven un resultado por elemento. `Idempotency-Key` es opcional en las
 creaciones individual y bulk; reutilizarlo con el mismo body reproduce la
 respuesta durante 24 horas sin duplicar recetas.
 
-La subida de imágenes todavía no forma parte de la API. `image` puede omitirse
-o contener una URL/ruta admitida por el schema actual.
+Las recetas usan un sello visual en lugar de fotografías. `appearance` acepta
+un `icon` y un `background` de los catálogos documentados en OpenAPI; si se
+omite, Koda asigna y almacena el fallback del método. La subida de imágenes no
+forma parte del MVP.
 
 ## Verificación
 

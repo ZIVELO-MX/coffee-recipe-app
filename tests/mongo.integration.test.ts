@@ -116,8 +116,14 @@ suite("MongoDB recipe persistence", () => {
 
     await expect(personalRecipes.patchPersonalRecipe(inserted.insertedId.toString(), { name: "Ajena" }, "owner_2"))
       .rejects.toBeInstanceOf(personalRecipes.PersonalRecipeNotFoundError)
-    await personalRecipes.patchPersonalRecipe(inserted.insertedId.toString(), { name: "Propia", image: null }, "owner_1")
-    expect(await db.collection("recipes").findOne({ _id: inserted.insertedId })).toMatchObject({ name: "Propia" })
+    await personalRecipes.patchPersonalRecipe(inserted.insertedId.toString(), {
+      name: "Propia",
+      appearance: { icon: "timer", background: "mocha" },
+    }, "owner_1")
+    expect(await db.collection("recipes").findOne({ _id: inserted.insertedId })).toMatchObject({
+      name: "Propia",
+      appearance: { icon: "timer", background: "mocha" },
+    })
 
     await db.collection("likes").insertOne({ clerk_user_id: "fan", recipe_id: inserted.insertedId, created_at: new Date() })
     await db.collection("saved_recipes").insertOne({ clerk_user_id: "fan", recipe_id: inserted.insertedId, created_at: new Date() })

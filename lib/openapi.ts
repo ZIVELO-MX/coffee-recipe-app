@@ -37,7 +37,7 @@ export const OPENAPI_DOCUMENT = {
   openapi: "3.1.0",
   info: {
     title: "Koda Coffee API",
-    version: "0.1.0",
+    version: "0.2.0",
     description: "API pública para consultar molinos y administrar recetas de café propias.",
   },
   servers: [{ url: "/", description: "Servidor actual" }],
@@ -177,6 +177,23 @@ export const OPENAPI_DOCUMENT = {
         type: "string",
         enum: ["v60", "chemex", "aeropress", "french-press", "moka", "kalita"],
       },
+      Appearance: {
+        type: "object",
+        additionalProperties: false,
+        required: ["icon", "background"],
+        properties: {
+          icon: {
+            type: "string",
+            enum: ["coffee", "bean", "droplets", "flame", "timer", "scale", "gauge", "sparkles"],
+            description: "Identificador estable del icono Lucide administrado por Koda.",
+          },
+          background: {
+            type: "string",
+            enum: ["caramel", "crema", "terracotta", "olive", "mocha", "slate"],
+            description: "Identificador estable del color de fondo administrado por Koda.",
+          },
+        },
+      },
       RecipeCreateInput: {
         ...recipeCreateInput,
         description: "Receta sin autor; Koda lo deriva del dueño de la API key.",
@@ -262,13 +279,13 @@ export const OPENAPI_DOCUMENT = {
       Recipe: {
         type: "object",
         additionalProperties: false,
-        required: ["_id", "name", "author", "method", "image", "coffee_g", "water_ml", "temperature_c", "grind", "preparation", "steps", "total_seconds", "like_count", "viewer_liked", "viewer_saved"],
+        required: ["_id", "name", "author", "method", "appearance", "coffee_g", "water_ml", "temperature_c", "grind", "preparation", "steps", "total_seconds", "like_count", "viewer_liked", "viewer_saved"],
         properties: {
           _id: { type: "string" },
           name: { type: "string" },
           author: { type: "string" },
           method: { $ref: "#/components/schemas/Method" },
-          image: { type: "string" },
+          appearance: { $ref: "#/components/schemas/Appearance" },
           coffee_g: { type: "number" },
           water_ml: { type: "number" },
           temperature_c: { type: "number" },

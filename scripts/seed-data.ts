@@ -8,7 +8,7 @@ export const SEED_RECIPES: SeedRecipe[] = [
     name: "V60 Regular",
     author: "Benji Rodriguez",
     method: "v60",
-    image: "/methods/v60-benji.png",
+    appearance: { icon: "droplets", background: "caramel" },
     coffee_g: 15,
     water_ml: 200,
     temperature_c: 80,

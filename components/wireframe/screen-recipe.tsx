@@ -1,11 +1,11 @@
 "use client"
 
 import { Bookmark, Check, ChevronRight, Ellipsis, Heart, Share2, X } from "lucide-react"
-import Image from "next/image"
 import { useEffect, useRef, useState, type RefObject } from "react"
 import { METHOD_LABEL, type RecipeView } from "@/lib/domain"
 import { formatTemp, mmss, ratio, totalSeconds } from "@/lib/format"
 import { Timeline } from "./timeline"
+import { AppearanceAvatar } from "./appearance-avatar"
 import type { TimerStatus } from "./recipe-experience"
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
@@ -159,22 +159,12 @@ export function ScreenRecipe({
         </div>
         </header>
       </div>
-      {/* Hero con imagen y overlay */}
-      <div className="relative h-64 w-full shrink-0 overflow-hidden">
-        <Image
-          src={recipe.image || "/icon.svg"}
-          alt={`Café preparado con método ${METHOD_LABEL[recipe.method]}`}
-          fill
-          sizes="(max-width: 400px) 100vw, 400px"
-          className="h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-background/10" />
-
-        {/* Título sobre la imagen */}
-        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1.5 p-4">
-          <span className="glass w-fit rounded-full px-3 py-1 text-xs font-medium text-foreground">
-            {METHOD_LABEL[recipe.method]}
-          </span>
+      <div className="flex shrink-0 flex-col items-center gap-3 px-6 pb-8 pt-5 text-center">
+        <AppearanceAvatar appearance={recipe.appearance} size="lg" className="glow-accent" />
+        <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+          {METHOD_LABEL[recipe.method]}
+        </span>
+        <div className="flex flex-col gap-1">
           <h1 className="font-serif text-3xl font-extrabold leading-tight text-foreground text-balance">
             {recipe.name}
           </h1>

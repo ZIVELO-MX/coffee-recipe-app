@@ -25,6 +25,15 @@ describe("OpenAPI document", () => {
     expect(schema.additionalProperties).toBe(false)
   })
 
+  it("documents curated recipe appearances instead of images", () => {
+    expect(OPENAPI_DOCUMENT.info.version).toBe("0.2.0")
+    expect(OPENAPI_DOCUMENT.components.schemas.Recipe.required).toContain("appearance")
+    expect(OPENAPI_DOCUMENT.components.schemas.Recipe.properties).not.toHaveProperty("image")
+    expect(OPENAPI_DOCUMENT.components.schemas.Appearance.properties.icon.enum).toContain("coffee")
+    expect(OPENAPI_DOCUMENT.components.schemas.Appearance.properties.background.enum).toContain("caramel")
+    expect(OPENAPI_DOCUMENT.components.schemas.RecipeCreateInput.properties).not.toHaveProperty("image")
+  })
+
   it("serves the document as cacheable JSON", async () => {
     const response = GET()
     expect(response.status).toBe(200)

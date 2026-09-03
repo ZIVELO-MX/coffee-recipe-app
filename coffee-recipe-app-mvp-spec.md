@@ -199,12 +199,9 @@ V60 · Tetsu Kasuya
 ♡ 284                         🔖
 ```
 
-Photography is **not required**.
-
-The card should remain useful without imagery.
-
-If method illustrations or images are introduced later, they should be
-optional and must not become a required recipe field.
+Recipe photography is not part of the MVP. Cards use a compact recipe seal
+made from a curated icon and background color, with a deterministic fallback
+for each brewing method.
 
 ------------------------------------------------------------------------
 

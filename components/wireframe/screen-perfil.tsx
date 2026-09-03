@@ -1,45 +1,52 @@
 "use client"
 
-import { ChevronRight, Code2, KeyRound, LogIn, LogOut, Settings2 } from "lucide-react"
+import { ChevronRight, Code2, KeyRound, LogIn, LogOut, Pencil, Settings2 } from "lucide-react"
 import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs"
-import Image from "next/image"
-import { getAvatar } from "@/lib/avatars"
-import type { ApiKeyStatus, ViewerUser } from "@/lib/domain"
+import { AppearanceAvatar } from "./appearance-avatar"
+import type { ApiKeyStatus, Appearance, ViewerUser } from "@/lib/domain"
 import { InstallApp } from "@/components/pwa/install-app"
 
 export function ScreenPerfil({
   user,
+  avatar,
   grinder,
   tempUnit,
   onOpenGrinder,
+  onOpenAvatar,
   onToggleUnit,
   apiKeyStatus,
   onOpenApiKey,
   onLogout,
 }: {
   user: ViewerUser
+  avatar: Appearance
   grinder: string
   tempUnit: "C" | "F"
   onOpenGrinder: () => void
+  onOpenAvatar: () => void
   onToggleUnit: (unit: "C" | "F") => void
   apiKeyStatus: ApiKeyStatus
   onOpenApiKey: () => void
   onLogout: () => void
 }) {
-  const avatar = getAvatar(user.avatarId)
-
   return (
     <div className="flex flex-col gap-7 px-4 pb-32 pt-8">
       <header className="flex flex-col items-center gap-3 text-center">
-        <div className="relative glow-accent h-20 w-20 overflow-hidden rounded-full border-2 border-primary/40">
-          <Image
-            src={avatar.src || "/icon.svg"}
-            alt={`Avatar ${avatar.label}`}
-            fill
-            sizes="80px"
-            className="h-full w-full object-cover"
-          />
-        </div>
+        {user.guest ? (
+          <AppearanceAvatar appearance={avatar} size="lg" className="glow-accent size-20" />
+        ) : (
+          <button
+            type="button"
+            onClick={onOpenAvatar}
+            aria-label="Cambiar avatar"
+            className="group relative rounded-full outline-none transition-transform active:scale-[0.97] focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          >
+            <AppearanceAvatar appearance={avatar} size="lg" className="glow-accent size-20 transition-transform group-hover:scale-[1.03]" />
+            <span className="absolute bottom-0 right-0 flex size-7 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground">
+              <Pencil className="size-3.5" aria-hidden="true" />
+            </span>
+          </button>
+        )}
         <div>
           <h1 className="font-serif text-2xl font-extrabold text-foreground">{user.name}</h1>
           <p className="text-sm text-muted-foreground">
