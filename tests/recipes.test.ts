@@ -18,7 +18,7 @@ describe("recipe filters", () => {
 
 describe("recipe seed", () => {
   it("contains valid, unambiguous recipes", () => {
-    expect(SEED_RECIPES).toHaveLength(5)
+    expect(SEED_RECIPES).toHaveLength(6)
     for (const { legacy_id, ...recipe } of SEED_RECIPES) {
       expect(legacy_id).toMatch(/^r\d+$/)
       const parsed = recipeInputSchema.parse(recipe)
