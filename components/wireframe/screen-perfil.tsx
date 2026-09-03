@@ -1,7 +1,7 @@
 "use client"
 
 import { ChevronRight, Code2, KeyRound, LogIn, LogOut, Settings2 } from "lucide-react"
-import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs"
+import { SignInButton, SignUpButton } from "@clerk/nextjs"
 import { AppearanceAvatar } from "./appearance-avatar"
 import type { ApiKeyStatus, Appearance, ViewerUser } from "@/lib/domain"
 import { InstallApp } from "@/components/pwa/install-app"
@@ -159,11 +159,14 @@ export function ScreenPerfil({
           </div>
         ) : (
           <div className="flex items-center justify-between gap-3 rounded-3xl border border-border bg-card p-4">
-            <UserButton />
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <span className="truncate text-sm font-semibold text-foreground">{user.name}</span>
+              <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+            </div>
             <button
               type="button"
               onClick={onLogout}
-              className="flex flex-1 items-center justify-center gap-2 rounded-full border border-border px-4 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50 active:scale-[0.98]"
+              className="flex shrink-0 items-center justify-center gap-2 rounded-full border border-border px-4 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50 active:scale-[0.98]"
             >
               <LogOut className="h-4 w-4" aria-hidden="true" />
               Cerrar sesión
