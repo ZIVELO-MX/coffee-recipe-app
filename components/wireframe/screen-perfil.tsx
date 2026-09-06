@@ -178,10 +178,12 @@ export function ScreenPerfil({
             <button
               type="button"
               onClick={onLogout}
-              className="flex shrink-0 items-center justify-center gap-2 rounded-full border border-border px-4 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50 active:scale-[0.98]"
+              disabled={accountPending}
+              aria-busy={accountPending}
+              className="flex shrink-0 items-center justify-center gap-2 rounded-full border border-border px-4 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60"
             >
-              <LogOut className="h-4 w-4" aria-hidden="true" />
-              Cerrar sesión
+              {accountPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <LogOut className="h-4 w-4" aria-hidden="true" />}
+              {accountPending ? "Cerrando…" : "Cerrar sesión"}
             </button>
           </div>
         )}

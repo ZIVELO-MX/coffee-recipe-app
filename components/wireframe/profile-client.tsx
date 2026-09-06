@@ -100,22 +100,33 @@ export function ProfileClient({
       return
     }
     setAccountPending(true)
+    let timeout: number | null = null
     try {
+      // Let the pending state paint before Clerk initializes its modal.
+      await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()))
+      timeout = window.setTimeout(() => {
+        setAccountPending(false)
+        setAccountError("No se pudo abrir la autenticación. Verifica que Clerk esté configurado en este preview.")
+      }, 8000)
       if (flow === "signIn") await openSignIn({ fallbackRedirectUrl: "/recipes" })
       else await openSignUp({ fallbackRedirectUrl: "/recipes" })
     } catch {
       setAccountError("La autenticación no está disponible en este entorno. Intenta más tarde o usa un entorno con Clerk configurado.")
     } finally {
+      if (timeout) window.clearTimeout(timeout)
       setAccountPending(false)
     }
   }
 
   async function handleSignOut() {
     setAccountError("")
+    setAccountPending(true)
     try {
       await signOut({ redirectUrl: "/recipes" })
     } catch {
       setAccountError("No se pudo cerrar la sesión. Intenta de nuevo.")
+    } finally {
+      setAccountPending(false)
     }
   }
 
