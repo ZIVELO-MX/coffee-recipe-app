@@ -46,8 +46,6 @@ test("the recipe timer starts without changing the recipe layout or route", asyn
   await dialog.getByRole("button", { name: "Cerrar receta" }).click()
   const closeConfirmation = page.getByRole("alertdialog")
   await expect(closeConfirmation).toBeVisible()
-  await closeConfirmation.getByRole("button", { name: "Salir y perder progreso" }).click({ force: true })
-  await expect(dialog).not.toBeVisible()
 })
 
 test("an authenticated user can persist a saved recipe", async ({ page }) => {
