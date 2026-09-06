@@ -98,8 +98,8 @@ export function Timeline({
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={reset} aria-label="Reiniciar" className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-foreground transition-transform active:scale-90"><RotateCcw className="h-5 w-5" aria-hidden="true" /></button>
-          <button type="button" onClick={toggleRunning} aria-label={running ? "Pausar" : completed ? "Completada" : "Iniciar"} disabled={completed} className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-90">
+          <button type="button" onClick={reset} aria-label="Reiniciar" className="flex size-11 items-center justify-center rounded-full bg-secondary text-foreground transition-transform active:scale-90"><RotateCcw className="h-5 w-5" aria-hidden="true" /></button>
+          <button type="button" onClick={toggleRunning} aria-label={running ? "Pausar" : completed ? "Completada" : elapsed > 0 ? "Reanudar" : "Iniciar"} disabled={completed} className="flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-90">
             {running ? <Pause className="h-6 w-6 fill-current" aria-hidden="true" /> : <Play className="h-6 w-6 fill-current" aria-hidden="true" />}
           </button>
         </div>
@@ -109,6 +109,9 @@ export function Timeline({
 
   return (
     <div className="flex flex-col gap-5">
+      <p className="sr-only" role="status" aria-live="polite">
+        {active && !completed ? `Paso ${safeActiveIndex + 1}: ${active.instruction}` : completed ? "Receta completada" : ""}
+      </p>
       {/* Cronómetro — elemento signature "liquid glass" con glow cálido */}
       {portalTarget && createPortal(timer, portalTarget)}
 
@@ -140,8 +143,8 @@ export function Timeline({
                 )}
               </div>
               {/* Contenido */}
-              <button
-                type="button"
+              <div
+                aria-current={isActive ? "step" : undefined}
                 className={`mb-2.5 flex-1 rounded-2xl border p-4 text-left transition-colors ${
                   isActive
                     ? "border-primary/50 bg-primary/10"
@@ -158,7 +161,7 @@ export function Timeline({
                 >
                   {step.instruction}
                 </p>
-              </button>
+              </div>
             </li>
           )
         })}

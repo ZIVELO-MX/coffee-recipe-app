@@ -1,6 +1,7 @@
 "use client"
 
 import { X } from "lucide-react"
+import { useEffect, useRef } from "react"
 
 export type FilterGroup = {
   label: string
@@ -14,6 +15,10 @@ export const FILTER_GROUPS: FilterGroup[] = [
     { label: "AeroPress", value: "aeropress" }, { label: "Prensa francesa", value: "french-press" },
     { label: "Kalita", value: "kalita" }, { label: "Moka", value: "moka" },
   ] },
+  { label: "Tiempo", key: "duration", options: [
+    { label: "< 2:30", value: "150-less" }, { label: "2:30–3:30", value: "150-210" },
+    { label: "3:30–4:30", value: "210-270" }, { label: "4:30 o más", value: "270-plus" },
+  ] },
   { label: "Café", key: "coffee", options: [
     { label: "10–15 g", value: "10-15" }, { label: "15–20 g", value: "15-20" },
     { label: "20–25 g", value: "20-25" }, { label: "25 g+", value: "25-plus" },
@@ -25,10 +30,6 @@ export const FILTER_GROUPS: FilterGroup[] = [
   { label: "Temperatura", key: "temperature", options: [
     { label: "85–89 °C", value: "85-89" }, { label: "90–93 °C", value: "90-93" },
     { label: "94–96 °C", value: "94-96" },
-  ] },
-  { label: "Tiempo", key: "duration", options: [
-    { label: "< 2:30", value: "150-less" }, { label: "2:30–3:30", value: "150-210" },
-    { label: "3:30–4:30", value: "210-270" }, { label: "> 4:30", value: "270-plus" },
   ] },
 ]
 
@@ -45,10 +46,23 @@ export function FilterSheet({
   onApply: () => void
   onClose: () => void
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const openerRef = useRef<HTMLElement | null>(null)
+  useEffect(() => {
+    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    dialogRef.current?.focus()
+    return () => { if (openerRef.current?.isConnected) openerRef.current.focus({ preventScroll: true }) }
+  }, [])
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="filter-sheet-title"
       className="fixed inset-0 z-50 flex items-end justify-center bg-background/70 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={onClose}
+      onKeyDown={(event) => { if (event.key === "Escape") onClose() }}
+      tabIndex={-1}
+      ref={dialogRef}
     >
       <div
         className="glass-strong flex max-h-[85vh] w-full max-w-[400px] flex-col rounded-t-[2rem] sm:rounded-[2rem]"
@@ -60,7 +74,7 @@ export function FilterSheet({
         </div>
 
         <div className="flex items-center justify-between p-5 pb-3">
-          <h2 className="font-serif text-xl font-bold text-foreground">Filtros</h2>
+          <h2 id="filter-sheet-title" className="font-serif text-xl font-bold text-foreground">Filtros</h2>
           <button
             type="button"
             onClick={onClose}

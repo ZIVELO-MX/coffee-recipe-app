@@ -204,6 +204,158 @@
   transition: height 320ms cubic-bezier(0.22, 1, 0.36, 1), border-radius 320ms ease;
 }
 
+/* Radix overlays use data-state for their lifecycle. Keep these animations
+   local so every dialog gets a real transition without an animation plugin. */
+.dialog-overlay-motion[data-state="open"],
+.alert-dialog-overlay-motion[data-state="open"] {
+  animation: overlay-fade-in 160ms ease-out both;
+}
+
+.dialog-overlay-motion[data-state="closed"],
+.alert-dialog-overlay-motion[data-state="closed"] {
+  animation: overlay-fade-out 140ms ease-in both;
+}
+
+.dialog-content-motion[data-state="open"],
+.alert-dialog-content-motion[data-state="open"] {
+  translate: -50% -50%;
+  animation: dialog-content-in 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.dialog-content-motion[data-state="closed"],
+.alert-dialog-content-motion[data-state="closed"] {
+  translate: -50% -50%;
+  animation: dialog-content-out 140ms ease-in both;
+}
+
+.grinder-overlay {
+  animation: overlay-fade-in 160ms ease-out both;
+}
+
+.grinder-overlay-closing {
+  animation: overlay-fade-out 140ms ease-in both;
+  pointer-events: none;
+}
+
+.grinder-dialog {
+  animation: grinder-content-in 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.grinder-dialog-closing {
+  animation: grinder-content-out 140ms ease-in both;
+  pointer-events: none;
+}
+
+@keyframes overlay-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes overlay-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes dialog-content-in {
+  from {
+    opacity: 0;
+    scale: 0.96;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@keyframes dialog-content-out {
+  from {
+    opacity: 1;
+    scale: 1;
+  }
+  to {
+    opacity: 0;
+    scale: 0.98;
+  }
+}
+
+@keyframes grinder-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.35rem) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes grinder-content-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(0.2rem) scale(0.98);
+  }
+}
+
+.recipe-actions-popover {
+  transform-origin: top right;
+  animation: recipe-actions-popover-in 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.recipe-actions-popover-closing {
+  animation: recipe-actions-popover-out 140ms ease-in both;
+  pointer-events: none;
+}
+
+@keyframes recipe-actions-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.35rem) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes recipe-actions-popover-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-0.2rem) scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog-overlay-motion,
+  .alert-dialog-overlay-motion,
+  .dialog-content-motion,
+  .alert-dialog-content-motion {
+    animation: none;
+  }
+
+  .grinder-overlay,
+  .grinder-overlay-closing,
+  .grinder-dialog,
+  .grinder-dialog-closing {
+    animation: none;
+  }
+
+  .recipe-actions-popover {
+    animation: none;
+  }
+
+  .recipe-actions-popover-closing {
+    animation: none;
+  }
+}
+
 .recipe-dialog-closing {
   animation: sheet-out 220ms ease-in both;
 }

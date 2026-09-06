@@ -1,7 +1,7 @@
 "use client"
 
-import { Bookmark, Check, ChevronRight, Ellipsis, Heart, Share2, X } from "lucide-react"
-import { useEffect, useRef, useState, type RefObject } from "react"
+import { Bookmark, Check, ChevronRight, Ellipsis, Heart, Loader2, Share2, X } from "lucide-react"
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import { METHOD_LABEL, type RecipeView } from "@/lib/domain"
 import { formatTemp, mmss, ratio, totalSeconds } from "@/lib/format"
 import { Timeline } from "./timeline"
@@ -61,6 +61,7 @@ export function ScreenRecipe({
   tempUnit,
   onToggleUnit,
   onOpenGrinder,
+  actionPending,
   saved,
   onToggleSaved,
   liked,
@@ -77,6 +78,7 @@ export function ScreenRecipe({
   tempUnit: "C" | "F"
   onToggleUnit: (unit: "C" | "F") => void
   onOpenGrinder: () => void
+  actionPending: boolean
   saved: boolean
   onToggleSaved: () => void
   liked: boolean
@@ -88,17 +90,42 @@ export function ScreenRecipe({
   onRequestClose: () => void
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [menuClosing, setMenuClosing] = useState(false)
   const [shareStatus, setShareStatus] = useState("")
   const menuRef = useRef<HTMLDivElement>(null)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const menuCloseTimer = useRef<number | null>(null)
+
+  const closeMenu = useCallback(() => {
+    if (!menuOpen || menuClosing) return
+    setMenuClosing(true)
+    menuCloseTimer.current = window.setTimeout(() => {
+      setMenuOpen(false)
+      setMenuClosing(false)
+      menuCloseTimer.current = null
+    }, 140)
+  }, [menuClosing, menuOpen])
+
+  function toggleMenu() {
+    if (menuOpen) closeMenu()
+    else {
+      setMenuClosing(false)
+      setMenuOpen(true)
+    }
+  }
+
+  useEffect(() => () => {
+    if (menuCloseTimer.current) window.clearTimeout(menuCloseTimer.current)
+  }, [])
+
   useEffect(() => {
     if (!menuOpen) return
     function handlePointerDown(event: PointerEvent) {
-      if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false)
+      if (!menuRef.current?.contains(event.target as Node)) closeMenu()
     }
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        setMenuOpen(false)
+        closeMenu()
         menuButtonRef.current?.focus()
       }
     }
@@ -108,7 +135,7 @@ export function ScreenRecipe({
       document.removeEventListener("pointerdown", handlePointerDown)
       document.removeEventListener("keydown", handleKeyDown)
     }
-  }, [menuOpen])
+  }, [closeMenu, menuClosing, menuOpen])
 
   async function shareRecipe() {
     const url = new URL(`/recipes/${recipe._id}`, window.location.origin).toString()
@@ -136,17 +163,17 @@ export function ScreenRecipe({
           <X className="h-5 w-5" aria-hidden="true" />
         </button>
         <div ref={menuRef} className="relative ml-auto">
-          <button data-no-drag ref={menuButtonRef} type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => setMenuOpen((open) => !open)} aria-label="Más acciones" aria-haspopup="menu" aria-expanded={menuOpen} className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-secondary">
+          <button data-no-drag ref={menuButtonRef} type="button" onPointerDown={(event) => event.stopPropagation()} onClick={toggleMenu} aria-label="Más acciones" aria-haspopup="menu" aria-expanded={menuOpen && !menuClosing} className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-secondary">
             <Ellipsis className="h-5 w-5" aria-hidden="true" />
           </button>
           {menuOpen && (
-            <div role="menu" aria-label="Acciones de receta" className="glass-strong absolute right-0 top-12 z-50 flex min-w-52 flex-col gap-1 rounded-2xl p-2 shadow-2xl">
-              <button data-no-drag role="menuitemcheckbox" aria-checked={liked} type="button" onPointerDown={(event) => event.stopPropagation()} onClick={onToggleLiked} className="flex items-center justify-between gap-4 rounded-xl px-3 py-3 text-left text-sm hover:bg-secondary">
-                <span className="inline-flex items-center gap-2"><Heart className={`h-4 w-4 text-primary ${liked ? "fill-primary" : ""}`} aria-hidden="true" />{liked ? "Quitar like" : "Dar like"}</span>
+            <div role="menu" aria-label="Acciones de receta" className={`recipe-actions-popover glass-strong absolute right-0 top-12 z-50 flex min-w-52 flex-col gap-1 rounded-2xl p-2 shadow-2xl ${menuClosing ? "recipe-actions-popover-closing" : ""}`}>
+              <button data-no-drag role="menuitemcheckbox" aria-checked={liked} disabled={actionPending} aria-busy={actionPending} type="button" onPointerDown={(event) => event.stopPropagation()} onClick={onToggleLiked} className="flex items-center justify-between gap-4 rounded-xl px-3 py-3 text-left text-sm hover:bg-secondary disabled:pointer-events-none disabled:opacity-60">
+                <span className="inline-flex items-center gap-2">{actionPending ? <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden="true" /> : <Heart className={`h-4 w-4 text-primary ${liked ? "fill-primary" : ""}`} aria-hidden="true" />}{liked ? "Quitar like" : "Dar like"}</span>
                 {liked && <Check className="h-4 w-4 text-primary" aria-hidden="true" />}
               </button>
-              <button data-no-drag role="menuitemcheckbox" aria-checked={saved} type="button" onPointerDown={(event) => event.stopPropagation()} onClick={onToggleSaved} className="flex items-center justify-between gap-4 rounded-xl px-3 py-3 text-left text-sm hover:bg-secondary">
-                <span className="inline-flex items-center gap-2"><Bookmark className={`h-4 w-4 text-primary ${saved ? "fill-primary" : ""}`} aria-hidden="true" />{saved ? "Quitar guardado" : "Guardar"}</span>
+              <button data-no-drag role="menuitemcheckbox" aria-checked={saved} disabled={actionPending} aria-busy={actionPending} type="button" onPointerDown={(event) => event.stopPropagation()} onClick={onToggleSaved} className="flex items-center justify-between gap-4 rounded-xl px-3 py-3 text-left text-sm hover:bg-secondary disabled:pointer-events-none disabled:opacity-60">
+                <span className="inline-flex items-center gap-2">{actionPending ? <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden="true" /> : <Bookmark className={`h-4 w-4 text-primary ${saved ? "fill-primary" : ""}`} aria-hidden="true" />}{saved ? "Quitar guardado" : "Guardar"}</span>
                 {saved && <Check className="h-4 w-4 text-primary" aria-hidden="true" />}
               </button>
               <button data-no-drag role="menuitem" type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => void shareRecipe()} className="flex items-center gap-2 rounded-xl px-3 py-3 text-left text-sm hover:bg-secondary">
@@ -165,7 +192,7 @@ export function ScreenRecipe({
           {METHOD_LABEL[recipe.method]}
         </span>
         <div className="flex flex-col gap-1">
-          <h1 className="font-serif text-3xl font-extrabold leading-tight text-foreground text-balance">
+          <h1 tabIndex={-1} className="font-serif text-3xl font-extrabold leading-tight text-foreground outline-none text-balance">
             {recipe.name}
           </h1>
           <p className="text-sm text-muted-foreground">por {recipe.author}</p>

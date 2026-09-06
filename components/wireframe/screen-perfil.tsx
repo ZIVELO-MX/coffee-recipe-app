@@ -1,7 +1,6 @@
 "use client"
 
-import { ChevronRight, Code2, KeyRound, LogIn, LogOut, Settings2 } from "lucide-react"
-import { SignInButton, SignUpButton } from "@clerk/nextjs"
+import { ChevronRight, Code2, KeyRound, Loader2, LogIn, LogOut, Settings2 } from "lucide-react"
 import { AppearanceAvatar } from "./appearance-avatar"
 import type { ApiKeyStatus, Appearance, ViewerUser } from "@/lib/domain"
 import { InstallApp } from "@/components/pwa/install-app"
@@ -17,6 +16,13 @@ export function ScreenPerfil({
   apiKeyStatus,
   onOpenApiKey,
   onLogout,
+  pending,
+  accountError,
+  accountAction,
+  authConfigured,
+  onSignIn,
+  onSignUp,
+  onAuthTriggerFocus,
 }: {
   user: ViewerUser
   avatar: Appearance
@@ -28,6 +34,13 @@ export function ScreenPerfil({
   apiKeyStatus: ApiKeyStatus
   onOpenApiKey: () => void
   onLogout: () => void
+  pending: boolean
+  accountError?: string
+  accountAction: "signIn" | "signUp" | "signOut" | null
+  authConfigured: boolean
+  onSignIn: () => void
+  onSignUp: () => void
+  onAuthTriggerFocus: () => void
 }) {
   return (
     <div className="flex flex-col gap-7 px-4 pb-32 pt-8">
@@ -38,8 +51,9 @@ export function ScreenPerfil({
           <button
             type="button"
             onClick={onOpenAvatar}
+            disabled={pending}
             aria-label="Cambiar avatar"
-            className="group relative rounded-full outline-none transition-transform active:scale-[0.97] focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="group relative rounded-full outline-none transition-transform active:scale-[0.97] focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-60"
           >
             <AppearanceAvatar appearance={avatar} size="lg" className="glow-accent size-20 transition-transform group-hover:scale-[1.03]" />
           </button>
@@ -63,11 +77,13 @@ export function ScreenPerfil({
           <button
             type="button"
             onClick={onOpenGrinder}
-            className="flex items-center justify-between px-4 pt-5 pb-4 text-left transition-colors hover:bg-secondary/50"
+            disabled={pending}
+            aria-busy={pending}
+            className="flex items-center justify-between px-4 pt-5 pb-4 text-left transition-colors hover:bg-secondary/50 disabled:pointer-events-none disabled:opacity-60"
           >
             <span className="text-sm text-foreground">Molino</span>
             <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
-              {grinder}
+              {pending ? <Loader2 className="size-4 animate-spin text-primary" aria-label="Guardando molino" /> : grinder}
               <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </span>
           </button>
@@ -77,8 +93,10 @@ export function ScreenPerfil({
           <button
             type="button"
             onClick={() => onToggleUnit(tempUnit === "C" ? "F" : "C")}
+            disabled={pending}
+            aria-busy={pending}
             aria-label={`Temperatura en grados ${tempUnit === "C" ? "Celsius" : "Fahrenheit"}, pulsa para cambiar`}
-            className="flex w-full items-center justify-between px-4 pt-4 pb-5 text-left transition-colors hover:bg-secondary/50"
+            className="flex w-full items-center justify-between px-4 pt-4 pb-5 text-left transition-colors hover:bg-secondary/50 disabled:pointer-events-none disabled:opacity-60"
           >
             <span className="text-sm text-foreground">Temperatura</span>
             <div className="flex rounded-full bg-secondary p-0.5" aria-hidden="true">
@@ -95,6 +113,7 @@ export function ScreenPerfil({
                 </span>
               ))}
             </div>
+            {pending && <Loader2 className="size-4 animate-spin text-primary" aria-label="Guardando temperatura" />}
           </button>
         </div>
       </section>
@@ -115,7 +134,8 @@ export function ScreenPerfil({
           <button
             type="button"
             onClick={onOpenApiKey}
-            className="flex w-full items-center justify-between gap-3 rounded-3xl border border-border bg-card p-4 text-left transition-colors hover:bg-secondary/50"
+            disabled={pending}
+            className="flex w-full items-center justify-between gap-3 rounded-3xl border border-border bg-card p-4 text-left transition-colors hover:bg-secondary/50 disabled:pointer-events-none disabled:opacity-60"
           >
             <span className="flex min-w-0 items-center gap-3">
               <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-secondary text-primary">
@@ -138,24 +158,18 @@ export function ScreenPerfil({
       <section className="flex flex-col gap-3">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Cuenta</p>
         {user.guest ? (
-          <div className="flex gap-2">
-            <SignInButton mode="modal">
-              <button
-                type="button"
-                className="flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-4 py-3.5 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90 active:scale-[0.98]"
-              >
-                <LogIn className="h-4 w-4" aria-hidden="true" />
-                Iniciar sesión
+          <div className="flex flex-col gap-3">
+            <div className="flex gap-2">
+              <button type="button" onClick={onSignIn} onFocus={onAuthTriggerFocus} disabled={accountAction === "signIn"} aria-busy={accountAction === "signIn"} className="flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-4 py-3.5 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60">
+                {accountAction === "signIn" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <LogIn className="h-4 w-4" aria-hidden="true" />}
+                {accountAction === "signIn" ? "Abriendo…" : "Iniciar sesión"}
               </button>
-            </SignInButton>
-            <SignUpButton mode="modal">
-              <button
-                type="button"
-                className="flex-1 rounded-full border border-border bg-card px-4 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50 active:scale-[0.98]"
-              >
-                Crear cuenta
+              <button type="button" onClick={onSignUp} onFocus={onAuthTriggerFocus} disabled={accountAction === "signUp"} aria-busy={accountAction === "signUp"} className="flex-1 rounded-full border border-border bg-card px-4 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60">
+                {accountAction === "signUp" ? "Abriendo…" : "Crear cuenta"}
               </button>
-            </SignUpButton>
+            </div>
+            {accountError && <p role="alert" className="rounded-2xl border border-destructive/30 bg-destructive/10 p-3 text-center text-xs text-destructive">{accountError}</p>}
+            {!authConfigured && !accountError && <p className="rounded-2xl border border-border bg-secondary/40 p-3 text-center text-xs text-muted-foreground">La autenticación estará disponible cuando Clerk esté configurado en este entorno.</p>}
           </div>
         ) : (
           <div className="flex items-center justify-between gap-3 rounded-3xl border border-border bg-card p-4">
@@ -166,13 +180,16 @@ export function ScreenPerfil({
             <button
               type="button"
               onClick={onLogout}
-              className="flex shrink-0 items-center justify-center gap-2 rounded-full border border-border px-4 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50 active:scale-[0.98]"
+              disabled={accountAction === "signOut"}
+              aria-busy={accountAction === "signOut"}
+              className="flex shrink-0 items-center justify-center gap-2 rounded-full border border-border px-4 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60"
             >
-              <LogOut className="h-4 w-4" aria-hidden="true" />
-              Cerrar sesión
+              {accountAction === "signOut" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <LogOut className="h-4 w-4" aria-hidden="true" />}
+              {accountAction === "signOut" ? "Cerrando…" : "Cerrar sesión"}
             </button>
           </div>
         )}
+        {!user.guest && accountError && <p role="alert" className="rounded-2xl border border-destructive/30 bg-destructive/10 p-3 text-center text-xs text-destructive">{accountError}</p>}
       </section>
     </div>
   )

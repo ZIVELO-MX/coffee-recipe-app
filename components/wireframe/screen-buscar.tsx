@@ -34,7 +34,7 @@ export function ScreenBuscar({ result, filters }: { result: RecipePage; filters:
 
   const active = selectionFromFilters(filters)
   const labels = new Map(FILTER_GROUPS.flatMap((group) => group.options.map((option) => [`${group.key}:${option.value}`, option.label])))
-  const chips = FILTER_KEYS.flatMap((key) => active[key].map((value) => `${key}:${value}`))
+  const chips = FILTER_KEYS.flatMap((key) => active[key].map((value) => ({ id: `${key}:${value}`, key, value, label: labels.get(`${key}:${value}`) ?? value })))
   const [draftFilters, setDraftFilters] = useState<FilterSelection>(() => selectionFromFilters(filters))
 
   function navigate(mutator: (params: URLSearchParams) => void) {
@@ -112,20 +112,19 @@ export function ScreenBuscar({ result, filters }: { result: RecipePage; filters:
         <form onSubmit={submitSearch} className="glass flex items-center gap-2.5 rounded-full px-4 py-3">
           <Search className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
           <label htmlFor="recipe-search" className="sr-only">Buscar recetas</label>
-          <input key={filters.q} id="recipe-search" type="search" name="q" defaultValue={filters.q} placeholder="Buscar recetas, métodos o baristas..." className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground" />
+          <input key={filters.q} id="recipe-search" type="search" name="q" defaultValue={filters.q} placeholder="Buscar por receta o autor..." className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground" />
           <button type="submit" className="sr-only">Buscar</button>
         </form>
       </search>
 
       <FilterBar
-        filters={chips.map((chip) => labels.get(chip) ?? chip)}
-        onRemove={(label) => {
-          const chip = chips.find((candidate) => labels.get(candidate) === label)
-          if (!chip) return
-          const [key, value] = chip.split(":") as [FilterGroup["key"], string]
-          toggleFilter(key, value)
+        filters={chips}
+        onRemove={(id) => {
+          const chip = chips.find((candidate) => candidate.id === id)
+          if (chip) toggleFilter(chip.key, chip.value)
         }}
         onMore={openFilterSheet}
+        onClear={clearFilters}
       />
 
       <div className="flex flex-col gap-4" aria-live="polite">
