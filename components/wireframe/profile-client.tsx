@@ -21,7 +21,7 @@ export function ProfileClient({
   initialApiKeyStatus: ApiKeyStatus
 }) {
   const { isSignedIn } = useAuth()
-  const { signOut } = useClerk()
+  const { openSignIn, openSignUp, signOut } = useClerk()
   const [preferences, setPreferences] = useState(initialPreferences)
   const [grinderOpen, setGrinderOpen] = useState(false)
   const [apiKeyOpen, setApiKeyOpen] = useState(false)
@@ -29,6 +29,7 @@ export function ProfileClient({
   const [apiKeyStatus, setApiKeyStatus] = useState(initialApiKeyStatus)
   const [message, setMessage] = useState("")
   const [avatarError, setAvatarError] = useState("")
+  const [accountError, setAccountError] = useState("")
   const [pending, startTransition] = useTransition()
 
   useEffect(() => {
@@ -89,6 +90,29 @@ export function ProfileClient({
     })
   }
 
+  async function openAccountFlow(flow: "signIn" | "signUp") {
+    setAccountError("")
+    if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+      setAccountError("El inicio de sesión no está disponible en este preview porque Clerk no está configurado.")
+      return
+    }
+    try {
+      if (flow === "signIn") await openSignIn({ fallbackRedirectUrl: "/recipes" })
+      else await openSignUp({ fallbackRedirectUrl: "/recipes" })
+    } catch {
+      setAccountError("La autenticación no está disponible en este entorno. Intenta más tarde o usa un entorno con Clerk configurado.")
+    }
+  }
+
+  async function handleSignOut() {
+    setAccountError("")
+    try {
+      await signOut({ redirectUrl: "/recipes" })
+    } catch {
+      setAccountError("No se pudo cerrar la sesión. Intenta de nuevo.")
+    }
+  }
+
   return (
     <>
       <ScreenPerfil
@@ -102,7 +126,10 @@ export function ProfileClient({
         apiKeyStatus={apiKeyStatus}
         pending={pending}
         onOpenApiKey={() => setApiKeyOpen(true)}
-        onLogout={() => void signOut({ redirectUrl: "/recipes" })}
+        accountError={accountError}
+        onSignIn={() => void openAccountFlow("signIn")}
+        onSignUp={() => void openAccountFlow("signUp")}
+        onLogout={() => void handleSignOut()}
       />
       {message && <p role="status" className="mx-4 -mt-28 rounded-2xl border border-border bg-card p-3 text-center text-xs text-muted-foreground">{message}</p>}
       {grinderOpen && <GrinderSelector selected={preferences.default_grinder_id} onSelect={selectGrinder} onClose={() => setGrinderOpen(false)} />}

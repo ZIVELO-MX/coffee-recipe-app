@@ -1,7 +1,6 @@
 "use client"
 
 import { ChevronRight, Code2, KeyRound, Loader2, LogIn, LogOut, Settings2 } from "lucide-react"
-import { SignInButton, SignUpButton } from "@clerk/nextjs"
 import { AppearanceAvatar } from "./appearance-avatar"
 import type { ApiKeyStatus, Appearance, ViewerUser } from "@/lib/domain"
 import { InstallApp } from "@/components/pwa/install-app"
@@ -18,6 +17,9 @@ export function ScreenPerfil({
   onOpenApiKey,
   onLogout,
   pending,
+  accountError,
+  onSignIn,
+  onSignUp,
 }: {
   user: ViewerUser
   avatar: Appearance
@@ -30,6 +32,9 @@ export function ScreenPerfil({
   onOpenApiKey: () => void
   onLogout: () => void
   pending: boolean
+  accountError?: string
+  onSignIn: () => void
+  onSignUp: () => void
 }) {
   return (
     <div className="flex flex-col gap-7 px-4 pb-32 pt-8">
@@ -147,24 +152,17 @@ export function ScreenPerfil({
       <section className="flex flex-col gap-3">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Cuenta</p>
         {user.guest ? (
-          <div className="flex gap-2">
-            <SignInButton mode="modal">
-              <button
-                type="button"
-                className="flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-4 py-3.5 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90 active:scale-[0.98]"
-              >
+          <div className="flex flex-col gap-3">
+            <div className="flex gap-2">
+              <button type="button" onClick={onSignIn} className="flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-4 py-3.5 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90 active:scale-[0.98]">
                 <LogIn className="h-4 w-4" aria-hidden="true" />
                 Iniciar sesión
               </button>
-            </SignInButton>
-            <SignUpButton mode="modal">
-              <button
-                type="button"
-                className="flex-1 rounded-full border border-border bg-card px-4 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50 active:scale-[0.98]"
-              >
+              <button type="button" onClick={onSignUp} className="flex-1 rounded-full border border-border bg-card px-4 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50 active:scale-[0.98]">
                 Crear cuenta
               </button>
-            </SignUpButton>
+            </div>
+            {accountError && <p role="alert" className="rounded-2xl border border-destructive/30 bg-destructive/10 p-3 text-center text-xs text-destructive">{accountError}</p>}
           </div>
         ) : (
           <div className="flex items-center justify-between gap-3 rounded-3xl border border-border bg-card p-4">
@@ -182,6 +180,7 @@ export function ScreenPerfil({
             </button>
           </div>
         )}
+        {!user.guest && accountError && <p role="alert" className="rounded-2xl border border-destructive/30 bg-destructive/10 p-3 text-center text-xs text-destructive">{accountError}</p>}
       </section>
     </div>
   )
