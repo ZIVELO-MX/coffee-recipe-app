@@ -42,6 +42,15 @@ export const recipeStepSchema = z.object({
   instruction: z.string().trim().min(1).max(240),
   start: z.number().int().min(0),
   end: z.number().int().min(1).optional(),
+  semantics: z.object({
+    action: z.enum(["pour", "wait"]),
+    phase: z.enum(["blooming"]).optional(),
+    water_ml: z.number().finite().positive().optional(),
+    target_total_water_ml: z.number().finite().positive().optional(),
+    until_seconds: z.number().int().positive().optional(),
+    condition: z.enum(["drain_completely"]).optional(),
+    haptic_at_seconds: z.number().int().min(0).optional(),
+  }).strict().optional(),
 })
 
 export const recipeInputSchema = z.object({
