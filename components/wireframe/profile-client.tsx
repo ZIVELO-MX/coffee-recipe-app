@@ -32,7 +32,7 @@ export function ProfileClient({
   const [message, setMessage] = useState("")
   const [avatarError, setAvatarError] = useState("")
   const [accountError, setAccountError] = useState("")
-  const [accountPending, setAccountPending] = useState(false)
+  const [accountAction, setAccountAction] = useState<"signIn" | "signUp" | "signOut" | null>(null)
   const accountTimeoutRef = useRef<number | null>(null)
   const [pending, startTransition] = useTransition()
 
@@ -104,14 +104,14 @@ export function ProfileClient({
       setAccountError("El inicio de sesión no está disponible en este preview porque Clerk no está configurado.")
       return
     }
-    setAccountPending(true)
+    setAccountAction(flow)
     if (accountTimeoutRef.current) window.clearTimeout(accountTimeoutRef.current)
     try {
       // Let the pending state paint before Clerk initializes its modal.
       await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()))
       accountTimeoutRef.current = window.setTimeout(() => {
         accountTimeoutRef.current = null
-        setAccountPending(false)
+        setAccountAction(null)
         setAccountError("No se pudo abrir la autenticación. Verifica que Clerk esté configurado en este preview.")
       }, 8000)
       if (flow === "signIn") await openSignIn({ fallbackRedirectUrl: "/recipes" })
@@ -119,21 +119,28 @@ export function ProfileClient({
     } catch {
       if (accountTimeoutRef.current) window.clearTimeout(accountTimeoutRef.current)
       accountTimeoutRef.current = null
-      setAccountPending(false)
+      setAccountAction(null)
       setAccountError("La autenticación no está disponible en este entorno. Intenta más tarde o usa un entorno con Clerk configurado.")
     }
   }
 
   async function handleSignOut() {
     setAccountError("")
-    setAccountPending(true)
+    setAccountAction("signOut")
     try {
       await signOut({ redirectUrl: "/recipes" })
     } catch {
       setAccountError("No se pudo cerrar la sesión. Intenta de nuevo.")
     } finally {
-      setAccountPending(false)
+      setAccountAction(null)
     }
+  }
+
+  function handleAuthTriggerFocus() {
+    if (accountAction !== "signIn" && accountAction !== "signUp") return
+    if (accountTimeoutRef.current) window.clearTimeout(accountTimeoutRef.current)
+    accountTimeoutRef.current = null
+    setAccountAction(null)
   }
 
   return (
@@ -150,8 +157,9 @@ export function ProfileClient({
         pending={pending}
         onOpenApiKey={() => setApiKeyOpen(true)}
         accountError={accountError}
-        accountPending={accountPending}
+        accountAction={accountAction}
         authConfigured={authConfigured}
+        onAuthTriggerFocus={handleAuthTriggerFocus}
         onSignIn={() => void openAccountFlow("signIn")}
         onSignUp={() => void openAccountFlow("signUp")}
         onLogout={() => void handleSignOut()}

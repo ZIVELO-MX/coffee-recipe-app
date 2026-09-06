@@ -18,10 +18,11 @@ export function ScreenPerfil({
   onLogout,
   pending,
   accountError,
-  accountPending,
+  accountAction,
   authConfigured,
   onSignIn,
   onSignUp,
+  onAuthTriggerFocus,
 }: {
   user: ViewerUser
   avatar: Appearance
@@ -35,10 +36,11 @@ export function ScreenPerfil({
   onLogout: () => void
   pending: boolean
   accountError?: string
-  accountPending: boolean
+  accountAction: "signIn" | "signUp" | "signOut" | null
   authConfigured: boolean
   onSignIn: () => void
   onSignUp: () => void
+  onAuthTriggerFocus: () => void
 }) {
   return (
     <div className="flex flex-col gap-7 px-4 pb-32 pt-8">
@@ -158,12 +160,12 @@ export function ScreenPerfil({
         {user.guest ? (
           <div className="flex flex-col gap-3">
             <div className="flex gap-2">
-              <button type="button" onClick={onSignIn} disabled={accountPending} aria-busy={accountPending} className="flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-4 py-3.5 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60">
-                {accountPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <LogIn className="h-4 w-4" aria-hidden="true" />}
-                {accountPending ? "Abriendo…" : "Iniciar sesión"}
+              <button type="button" onClick={onSignIn} onFocus={onAuthTriggerFocus} disabled={accountAction === "signIn"} aria-busy={accountAction === "signIn"} className="flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-4 py-3.5 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60">
+                {accountAction === "signIn" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <LogIn className="h-4 w-4" aria-hidden="true" />}
+                {accountAction === "signIn" ? "Abriendo…" : "Iniciar sesión"}
               </button>
-              <button type="button" onClick={onSignUp} disabled={accountPending} aria-busy={accountPending} className="flex-1 rounded-full border border-border bg-card px-4 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60">
-                {accountPending ? "Abriendo…" : "Crear cuenta"}
+              <button type="button" onClick={onSignUp} onFocus={onAuthTriggerFocus} disabled={accountAction === "signUp"} aria-busy={accountAction === "signUp"} className="flex-1 rounded-full border border-border bg-card px-4 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60">
+                {accountAction === "signUp" ? "Abriendo…" : "Crear cuenta"}
               </button>
             </div>
             {accountError && <p role="alert" className="rounded-2xl border border-destructive/30 bg-destructive/10 p-3 text-center text-xs text-destructive">{accountError}</p>}
@@ -178,12 +180,12 @@ export function ScreenPerfil({
             <button
               type="button"
               onClick={onLogout}
-              disabled={accountPending}
-              aria-busy={accountPending}
+              disabled={accountAction === "signOut"}
+              aria-busy={accountAction === "signOut"}
               className="flex shrink-0 items-center justify-center gap-2 rounded-full border border-border px-4 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60"
             >
-              {accountPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <LogOut className="h-4 w-4" aria-hidden="true" />}
-              {accountPending ? "Cerrando…" : "Cerrar sesión"}
+              {accountAction === "signOut" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <LogOut className="h-4 w-4" aria-hidden="true" />}
+              {accountAction === "signOut" ? "Cerrando…" : "Cerrar sesión"}
             </button>
           </div>
         )}
