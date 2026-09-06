@@ -23,7 +23,7 @@ function validateSemantics(recipe: RecipeView): void {
       if (semantics.water_ml === undefined || semantics.target_total_water_ml === undefined) throw new WatchyRecipeCompatibilityError(`Pour step ${index} needs water amounts`)
       accumulated += semantics.water_ml
       if (semantics.target_total_water_ml < semantics.water_ml || semantics.target_total_water_ml > recipe.water_ml) throw new WatchyRecipeCompatibilityError(`Pour step ${index} has an invalid target total`)
-      if (semantics.target_total_water_ml < accumulated - 0.0001) throw new WatchyRecipeCompatibilityError(`Pour step ${index} has an incoherent target total`)
+      if (Math.abs(semantics.target_total_water_ml - accumulated) > 0.0001) throw new WatchyRecipeCompatibilityError(`Pour step ${index} has an incoherent target total`)
     }
     if (semantics.action === "wait" && semantics.until_seconds !== undefined && semantics.until_seconds !== end) throw new WatchyRecipeCompatibilityError(`Wait step ${index} has an incoherent until time`)
   }
