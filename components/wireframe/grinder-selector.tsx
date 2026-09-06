@@ -18,17 +18,19 @@ export function GrinderSelector({ selected, onSelect, onClose }: {
   const dialogRef = useRef<HTMLDivElement>(null)
   const openerRef = useRef<HTMLElement | null>(null)
   const closeTimerRef = useRef<number | null>(null)
+  const closingRef = useRef(false)
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
   const [closing, setClosing] = useState(false)
 
   const requestClose = useCallback(() => {
-    if (closing || closeTimerRef.current) return
+    if (closingRef.current || closeTimerRef.current) return
+    closingRef.current = true
     setClosing(true)
     closeTimerRef.current = window.setTimeout(() => {
       closeTimerRef.current = null
       onClose()
     }, 140)
-  }, [closing, onClose])
+  }, [onClose])
 
   function handleGrinderSelect(event: MouseEvent<HTMLButtonElement>) {
     const grinder = grinders.find((item) => item.id === Number(event.currentTarget.dataset.grinderId))
