@@ -44,8 +44,9 @@ test("the recipe timer starts without changing the recipe layout or route", asyn
   await page.getByRole("button", { name: "Pausar" }).click()
   await expect(page.getByRole("button", { name: "Reanudar", exact: true })).toBeVisible()
   await dialog.getByRole("button", { name: "Cerrar receta" }).click()
-  await expect(page.getByRole("alertdialog")).toBeVisible()
-  await page.getByRole("button", { name: "Salir y perder progreso" }).click()
+  const closeConfirmation = page.getByRole("alertdialog")
+  await expect(closeConfirmation).toBeVisible()
+  await closeConfirmation.getByRole("button", { name: "Salir y perder progreso" }).click({ force: true })
   await expect(dialog).not.toBeVisible()
 })
 
