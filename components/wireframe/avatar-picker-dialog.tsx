@@ -23,12 +23,14 @@ export function AvatarPickerDialog({
   value,
   onSave,
   pending = false,
+  error = "",
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   value: Appearance
   onSave: (value: Appearance) => void
   pending?: boolean
+  error?: string
 }) {
   const [draft, setDraft] = useState(value)
 
@@ -68,7 +70,7 @@ export function AvatarPickerDialog({
             aria-label="Color de fondo del avatar"
             value={draft.background}
             onValueChange={(background) => setDraft((current) => ({ ...current, background: background as AppearanceBackground }))}
-            className="grid grid-cols-6 gap-3 py-2"
+            className="grid grid-cols-3 gap-3 py-2 sm:grid-cols-6"
           >
             {APPEARANCE_BACKGROUNDS.map(({ id, label }) => (
               <RadioGroupItem
@@ -86,6 +88,7 @@ export function AvatarPickerDialog({
           </RadioGroup>
         </fieldset>
 
+        {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         <DialogFooter className="mt-2 sm:flex-row">
           <Button type="button" variant="outline" className="flex-1" onClick={() => onOpenChange(false)} disabled={pending}>Cancelar</Button>
           <Button type="button" className="flex-1" onClick={() => onSave(draft)} disabled={pending}>

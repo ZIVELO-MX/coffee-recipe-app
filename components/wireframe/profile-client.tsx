@@ -28,6 +28,7 @@ export function ProfileClient({
   const [avatarOpen, setAvatarOpen] = useState(false)
   const [apiKeyStatus, setApiKeyStatus] = useState(initialApiKeyStatus)
   const [message, setMessage] = useState("")
+  const [avatarError, setAvatarError] = useState("")
   const [pending, startTransition] = useTransition()
 
   useEffect(() => {
@@ -75,6 +76,7 @@ export function ProfileClient({
   }
 
   function saveAvatar(avatar: Appearance) {
+    setAvatarError("")
     startTransition(async () => {
       const result = await updateAvatar(avatar)
       if (result.ok) {
@@ -82,7 +84,7 @@ export function ProfileClient({
         setAvatarOpen(false)
         setMessage("Avatar guardado.")
       } else {
-        setMessage(result.error.message)
+        setAvatarError(result.error.message)
       }
     })
   }
@@ -95,7 +97,7 @@ export function ProfileClient({
         grinder={preferences.default_grinder_name ?? `Molino #${preferences.default_grinder_id}`}
         tempUnit={preferences.temperature_unit}
         onOpenGrinder={() => setGrinderOpen(true)}
-        onOpenAvatar={() => setAvatarOpen(true)}
+        onOpenAvatar={() => { setAvatarError(""); setAvatarOpen(true) }}
         onToggleUnit={(temperature_unit) => persist({ ...preferences, temperature_unit })}
         apiKeyStatus={apiKeyStatus}
         onOpenApiKey={() => setApiKeyOpen(true)}
@@ -112,6 +114,7 @@ export function ProfileClient({
               value={preferences.avatar}
               onSave={saveAvatar}
               pending={pending}
+              error={avatarError}
             />
           )}
           <ApiKeyDialog

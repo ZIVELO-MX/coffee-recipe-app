@@ -165,7 +165,7 @@ export function ScreenRecipe({
           {METHOD_LABEL[recipe.method]}
         </span>
         <div className="flex flex-col gap-1">
-          <h1 className="font-serif text-3xl font-extrabold leading-tight text-foreground text-balance">
+          <h1 tabIndex={-1} className="font-serif text-3xl font-extrabold leading-tight text-foreground outline-none text-balance">
             {recipe.name}
           </h1>
           <p className="text-sm text-muted-foreground">por {recipe.author}</p>

@@ -15,7 +15,19 @@ export function GrinderSelector({ selected, onSelect, onClose }: {
   const [grinders, setGrinders] = useState<GrinderOption[]>([])
   const [error, setError] = useState("")
   const anchorRef = useRef<HTMLSpanElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const openerRef = useRef<HTMLElement | null>(null)
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
+  useEffect(() => {
+    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    dialogRef.current?.focus()
+    function onKeyDown(event: KeyboardEvent) { if (event.key === "Escape") onClose() }
+    document.addEventListener("keydown", onKeyDown)
+    return () => {
+      document.removeEventListener("keydown", onKeyDown)
+      if (openerRef.current?.isConnected) openerRef.current.focus({ preventScroll: true })
+    }
+  }, [onClose, portalTarget])
   useEffect(() => {
     setPortalTarget(anchorRef.current?.closest("dialog") ?? document.body)
   }, [])
@@ -44,7 +56,7 @@ export function GrinderSelector({ selected, onSelect, onClose }: {
     <>
       <span ref={anchorRef} aria-hidden="true" />
       {createPortal(<div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/70 p-4 backdrop-blur-sm" onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby="grinder-title" className="glass-strong flex max-h-[80vh] w-full max-w-[400px] flex-col rounded-[2rem]" onClick={(event) => event.stopPropagation()}>
+      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="grinder-title" className="glass-strong flex max-h-[80vh] w-full max-w-[400px] flex-col rounded-[2rem] outline-none" onClick={(event) => event.stopPropagation()}>
         <div className="flex justify-center pt-3 sm:hidden"><span className="h-1 w-10 rounded-full bg-muted-foreground/40" aria-hidden="true" /></div>
         <div className="flex items-center justify-between p-5 pb-3">
           <h2 id="grinder-title" className="font-serif text-xl font-bold text-foreground">Selecciona tu molino</h2>
@@ -58,7 +70,7 @@ export function GrinderSelector({ selected, onSelect, onClose }: {
           </div>
         </div>
         <div className="flex-1 overflow-y-auto px-5 pb-5" aria-live="polite">
-          {error ? <p className="p-6 text-center text-sm text-destructive">{error}</p> : grinders.length === 0 ? <p className="p-6 text-center text-sm text-muted-foreground">Cargando molinos…</p> : Object.entries(grouped).map(([brand, models]) => (
+          {error ? <p role="alert" className="p-6 text-center text-sm text-destructive">{error}</p> : grinders.length === 0 ? <p className="p-6 text-center text-sm text-muted-foreground">Cargando molinos…</p> : Object.keys(grouped).length === 0 ? <p className="p-6 text-center text-sm text-muted-foreground">No encontramos molinos con esa búsqueda.</p> : Object.entries(grouped).map(([brand, models]) => (
             <div key={brand} className="pt-3">
               <p className="mb-1.5 px-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary">{brand}</p>
               <div className="flex flex-col gap-1.5">
