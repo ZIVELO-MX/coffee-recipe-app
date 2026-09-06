@@ -17,5 +17,6 @@ export default async function ProfilePage() {
     name: viewerDisplayName(clerkUser),
     email: clerkUser.primaryEmailAddress?.emailAddress ?? "",
   } : { name: "Invitado", email: "", guest: true }
-  return <TabPageTransition><ProfileClient user={user} initialPreferences={preferences} initialApiKeyStatus={apiKeyStatus} /></TabPageTransition>
+  const authConfigured = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY)
+  return <TabPageTransition><ProfileClient user={user} initialPreferences={preferences} initialApiKeyStatus={apiKeyStatus} authConfigured={authConfigured} /></TabPageTransition>
 }

@@ -15,10 +15,12 @@ export function ProfileClient({
   user,
   initialPreferences,
   initialApiKeyStatus,
+  authConfigured,
 }: {
   user: ViewerUser
   initialPreferences: UserPreferences
   initialApiKeyStatus: ApiKeyStatus
+  authConfigured: boolean
 }) {
   const { isSignedIn } = useAuth()
   const { openSignIn, openSignUp, signOut } = useClerk()
@@ -30,6 +32,7 @@ export function ProfileClient({
   const [message, setMessage] = useState("")
   const [avatarError, setAvatarError] = useState("")
   const [accountError, setAccountError] = useState("")
+  const [accountPending, setAccountPending] = useState(false)
   const [pending, startTransition] = useTransition()
 
   useEffect(() => {
@@ -92,15 +95,18 @@ export function ProfileClient({
 
   async function openAccountFlow(flow: "signIn" | "signUp") {
     setAccountError("")
-    if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+    if (!authConfigured) {
       setAccountError("El inicio de sesión no está disponible en este preview porque Clerk no está configurado.")
       return
     }
+    setAccountPending(true)
     try {
       if (flow === "signIn") await openSignIn({ fallbackRedirectUrl: "/recipes" })
       else await openSignUp({ fallbackRedirectUrl: "/recipes" })
     } catch {
       setAccountError("La autenticación no está disponible en este entorno. Intenta más tarde o usa un entorno con Clerk configurado.")
+    } finally {
+      setAccountPending(false)
     }
   }
 
@@ -127,6 +133,8 @@ export function ProfileClient({
         pending={pending}
         onOpenApiKey={() => setApiKeyOpen(true)}
         accountError={accountError}
+        accountPending={accountPending}
+        authConfigured={authConfigured}
         onSignIn={() => void openAccountFlow("signIn")}
         onSignUp={() => void openAccountFlow("signUp")}
         onLogout={() => void handleSignOut()}
