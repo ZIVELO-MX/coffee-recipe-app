@@ -1,7 +1,7 @@
 "use client"
 
 import { useAuth, useClerk } from "@clerk/nextjs"
-import { useEffect, useRef, useState, useTransition } from "react"
+import { useCallback, useEffect, useRef, useState, useTransition } from "react"
 import { updateAvatar, updatePreferences } from "@/app/actions"
 import type { ApiKeyStatus, Appearance, UserPreferences, ViewerUser } from "@/lib/domain"
 import { ApiKeyDialog } from "./api-key-dialog"
@@ -39,6 +39,25 @@ export function ProfileClient({
   useEffect(() => () => {
     if (accountTimeoutRef.current) window.clearTimeout(accountTimeoutRef.current)
   }, [])
+
+  const clearAuthAction = useCallback(() => {
+    if (accountTimeoutRef.current) window.clearTimeout(accountTimeoutRef.current)
+    accountTimeoutRef.current = null
+    setAccountAction(null)
+  }, [])
+
+  useEffect(() => {
+    if (accountAction !== "signIn" && accountAction !== "signUp") return
+    function handleClerkDismiss(event: PointerEvent) {
+      const target = event.target
+      if (!(target instanceof Element)) return
+      // Clerk keeps its modal content in a portal. A pointer event outside any
+      // dialog is the light-dismiss gesture, including clicking the backdrop.
+      if (!target.closest('[role="dialog"]')) clearAuthAction()
+    }
+    document.addEventListener("pointerdown", handleClerkDismiss, true)
+    return () => document.removeEventListener("pointerdown", handleClerkDismiss, true)
+  }, [accountAction, clearAuthAction])
 
   useEffect(() => {
     if (isSignedIn) return
@@ -138,9 +157,7 @@ export function ProfileClient({
 
   function handleAuthTriggerFocus() {
     if (accountAction !== "signIn" && accountAction !== "signUp") return
-    if (accountTimeoutRef.current) window.clearTimeout(accountTimeoutRef.current)
-    accountTimeoutRef.current = null
-    setAccountAction(null)
+    clearAuthAction()
   }
 
   return (
