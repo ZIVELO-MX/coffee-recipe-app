@@ -9,12 +9,16 @@ describe("OpenAPI document", () => {
       "/api/recipes",
       "/api/recipes/{id}",
       "/api/recipes/bulk",
+      "/api/watchy/v1/recipes",
+      "/api/watchy/v1/recipes/{id}",
       "/api/grinders",
     ])
     expect(OPENAPI_DOCUMENT.paths["/api/recipes"].post.security).toEqual([{ PersonalApiKey: [] }])
     expect(OPENAPI_DOCUMENT.paths["/api/recipes"].post.parameters).toContainEqual(expect.objectContaining({ name: "Idempotency-Key" }))
     expect(OPENAPI_DOCUMENT.paths["/api/recipes/{id}"].patch.security).toEqual([{ PersonalApiKey: [] }])
     expect(OPENAPI_DOCUMENT.paths["/api/recipes/bulk"].post.security).toEqual([{ PersonalApiKey: [] }])
+    expect(OPENAPI_DOCUMENT.paths["/api/watchy/v1/recipes/{id}"].get.responses["200"]).toBeDefined()
+    expect(OPENAPI_DOCUMENT.components.schemas.WatchyRecipe.properties.schemaVersion.const).toBe(1)
     expect(OPENAPI_DOCUMENT.components.securitySchemes.PersonalApiKey).toMatchObject({ type: "http", scheme: "bearer" })
   })
 

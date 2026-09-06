@@ -19,10 +19,10 @@ export const SEED_RECIPES: SeedRecipe[] = [
       "Calienta 200 ml de agua a 80 °C.",
     ],
     steps: [
-      { instruction: "Vierte 50 ml de agua para el blooming.", start: 0, end: 10 },
-      { instruction: "Espera hasta los 30 segundos.", start: 10, end: 30 },
-      { instruction: "Vierte 150 ml de agua hasta alcanzar 200 ml totales.", start: 30, end: 40 },
-      { instruction: "Deja drenar completamente.", start: 40, end: 150 },
+      { instruction: "Vierte 50 ml de agua para el blooming.", start: 0, end: 10, semantics: { action: "pour", phase: "blooming", water_ml: 50, target_total_water_ml: 50 } },
+      { instruction: "Espera hasta los 30 segundos.", start: 10, end: 30, semantics: { action: "wait", until_seconds: 30 } },
+      { instruction: "Vierte 150 ml de agua hasta alcanzar 200 ml totales.", start: 30, end: 40, semantics: { action: "pour", water_ml: 150, target_total_water_ml: 200 } },
+      { instruction: "Deja drenar completamente.", start: 40, end: 150, semantics: { action: "wait", condition: "drain_completely" } },
     ],
   },
 ]

@@ -150,6 +150,31 @@ export const OPENAPI_DOCUMENT = {
         responses: { "200": { description: "Resultados por elemento", content: { "application/json": { schema: { $ref: "#/components/schemas/BulkRecipeResponse" } } } }, "400": errorResponse, "401": errorResponse, "503": errorResponse },
       },
     },
+    "/api/watchy/v1/recipes": {
+      get: {
+        operationId: "listWatchyRecipes",
+        summary: "Lista recetas compatibles con Watchy",
+        parameters: recipeFilters,
+        responses: {
+          "200": { description: "Página de recetas Watchy", content: { "application/json": { schema: { $ref: "#/components/schemas/WatchyRecipePage" } } } },
+          "400": errorResponse,
+          "503": errorResponse,
+        },
+      },
+    },
+    "/api/watchy/v1/recipes/{id}": {
+      get: {
+        operationId: "getWatchyRecipe",
+        summary: "Obtiene una receta en el contrato Watchy v1",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: {
+          "200": { description: "Receta Watchy", content: { "application/json": { schema: { $ref: "#/components/schemas/WatchyRecipe" } } } },
+          "404": errorResponse,
+          "422": errorResponse,
+          "503": errorResponse,
+        },
+      },
+    },
     "/api/grinders": {
       get: {
         operationId: "listGrinders",
@@ -328,6 +353,24 @@ export const OPENAPI_DOCUMENT = {
           page: { type: "integer" },
           pageSize: { type: "integer" },
         },
+      },
+      WatchyTimedStep: {
+        oneOf: [
+          { type: "object", additionalProperties: false, required: ["actionType", "startTimeSeconds", "endTimeSeconds", "waterAmountMl", "targetTotalWaterMl", "primaryValue", "actionLabel"], properties: { actionType: { type: "string", const: "pour" }, startTimeSeconds: { type: "integer", minimum: 0 }, endTimeSeconds: { type: "integer", minimum: 1 }, waterAmountMl: { type: "number", exclusiveMinimum: 0 }, targetTotalWaterMl: { type: "number", exclusiveMinimum: 0 }, hapticNotificationAtSeconds: { type: "integer", minimum: 0 }, primaryValue: { type: "string" }, actionLabel: { type: "string" }, secondaryValue: { type: "string" } } },
+          { type: "object", additionalProperties: false, required: ["actionType", "startTimeSeconds", "endTimeSeconds", "actionLabel"], properties: { actionType: { type: "string", const: "wait" }, startTimeSeconds: { type: "integer", minimum: 0 }, endTimeSeconds: { type: "integer", minimum: 1 }, waitUntilSeconds: { type: "integer", minimum: 1 }, waitCondition: { type: "string", const: "drain_completely" }, hapticNotificationAtSeconds: { type: "integer", minimum: 0 }, actionLabel: { type: "string" }, primaryValue: { type: "string" }, secondaryValue: { type: "string" } } },
+        ],
+      },
+      WatchyRecipe: {
+        type: "object",
+        additionalProperties: false,
+        required: ["schemaVersion", "id", "brewMethod", "recipeName", "coffeeAmountGrams", "waterAmountMl", "ratio", "totalBrewTimeSeconds", "timedSteps"],
+        properties: { schemaVersion: { type: "integer", const: 1 }, id: { type: "string" }, brewMethod: { type: "string" }, recipeName: { type: "string" }, authorName: { type: "string" }, coffeeAmountGrams: { type: "number" }, waterAmountMl: { type: "number" }, ratio: { type: "string", example: "1:13.3" }, totalBrewTimeSeconds: { type: "integer" }, timedSteps: { type: "array", items: { $ref: "#/components/schemas/WatchyTimedStep" } } },
+      },
+      WatchyRecipePage: {
+        type: "object",
+        additionalProperties: false,
+        required: ["data", "total", "page", "pageSize"],
+        properties: { data: { type: "array", items: { $ref: "#/components/schemas/WatchyRecipe" } }, total: { type: "integer" }, page: { type: "integer" }, pageSize: { type: "integer" } },
       },
       Grinder: {
         type: "object",
