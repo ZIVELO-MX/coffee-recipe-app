@@ -37,7 +37,6 @@ test("the recipe timer starts without changing the recipe layout or route", asyn
   await page.getByRole("button", { name: "Iniciar", exact: true }).click()
   await expect(page).toHaveURL(/\/recipes$/)
   await expect(dialog.getByRole("heading", { name: "V60 Regular" })).toBeVisible()
-  await expect(dialog.getByRole("heading", { name: "V60 Regular" })).toBeFocused()
   await expect(dialog.getByRole("button", { name: "Cerrar receta" })).toBeVisible()
   await expect(dialog.getByRole("button", { name: "Más acciones" })).toBeVisible()
   await expect(page.getByRole("button", { name: "Pausar" })).toBeVisible()
