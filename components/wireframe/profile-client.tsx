@@ -1,7 +1,7 @@
 "use client"
 
 import { useAuth, useClerk } from "@clerk/nextjs"
-import { useEffect, useState, useTransition } from "react"
+import { useEffect, useRef, useState, useTransition } from "react"
 import { updateAvatar, updatePreferences } from "@/app/actions"
 import type { ApiKeyStatus, Appearance, UserPreferences, ViewerUser } from "@/lib/domain"
 import { ApiKeyDialog } from "./api-key-dialog"
@@ -33,7 +33,12 @@ export function ProfileClient({
   const [avatarError, setAvatarError] = useState("")
   const [accountError, setAccountError] = useState("")
   const [accountPending, setAccountPending] = useState(false)
+  const accountTimeoutRef = useRef<number | null>(null)
   const [pending, startTransition] = useTransition()
+
+  useEffect(() => () => {
+    if (accountTimeoutRef.current) window.clearTimeout(accountTimeoutRef.current)
+  }, [])
 
   useEffect(() => {
     if (isSignedIn) return
@@ -100,21 +105,22 @@ export function ProfileClient({
       return
     }
     setAccountPending(true)
-    let timeout: number | null = null
+    if (accountTimeoutRef.current) window.clearTimeout(accountTimeoutRef.current)
     try {
       // Let the pending state paint before Clerk initializes its modal.
       await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()))
-      timeout = window.setTimeout(() => {
+      accountTimeoutRef.current = window.setTimeout(() => {
+        accountTimeoutRef.current = null
         setAccountPending(false)
         setAccountError("No se pudo abrir la autenticación. Verifica que Clerk esté configurado en este preview.")
       }, 8000)
       if (flow === "signIn") await openSignIn({ fallbackRedirectUrl: "/recipes" })
       else await openSignUp({ fallbackRedirectUrl: "/recipes" })
     } catch {
-      setAccountError("La autenticación no está disponible en este entorno. Intenta más tarde o usa un entorno con Clerk configurado.")
-    } finally {
-      if (timeout) window.clearTimeout(timeout)
+      if (accountTimeoutRef.current) window.clearTimeout(accountTimeoutRef.current)
+      accountTimeoutRef.current = null
       setAccountPending(false)
+      setAccountError("La autenticación no está disponible en este entorno. Intenta más tarde o usa un entorno con Clerk configurado.")
     }
   }
 
