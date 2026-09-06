@@ -51,7 +51,9 @@ export function ApiKeyDialog({
   const keyInput = useRef<HTMLInputElement>(null)
 
   function changeOpen(nextOpen: boolean) {
-    if (!nextOpen && isPending) return
+    // Once the one-time key is visible, the user must be able to dismiss it
+    // even if React is still completing the transition that issued it.
+    if (!nextOpen && isPending && !issuedKey) return
     if (!nextOpen) {
       setIssuedKey(null)
       setError("")
