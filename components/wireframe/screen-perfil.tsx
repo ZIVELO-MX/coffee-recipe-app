@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronRight, Code2, KeyRound, LogIn, LogOut, Settings2 } from "lucide-react"
+import { ChevronRight, Code2, KeyRound, Loader2, LogIn, LogOut, Settings2 } from "lucide-react"
 import { SignInButton, SignUpButton } from "@clerk/nextjs"
 import { AppearanceAvatar } from "./appearance-avatar"
 import type { ApiKeyStatus, Appearance, ViewerUser } from "@/lib/domain"
@@ -17,6 +17,7 @@ export function ScreenPerfil({
   apiKeyStatus,
   onOpenApiKey,
   onLogout,
+  pending,
 }: {
   user: ViewerUser
   avatar: Appearance
@@ -28,6 +29,7 @@ export function ScreenPerfil({
   apiKeyStatus: ApiKeyStatus
   onOpenApiKey: () => void
   onLogout: () => void
+  pending: boolean
 }) {
   return (
     <div className="flex flex-col gap-7 px-4 pb-32 pt-8">
@@ -38,8 +40,9 @@ export function ScreenPerfil({
           <button
             type="button"
             onClick={onOpenAvatar}
+            disabled={pending}
             aria-label="Cambiar avatar"
-            className="group relative rounded-full outline-none transition-transform active:scale-[0.97] focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="group relative rounded-full outline-none transition-transform active:scale-[0.97] focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-60"
           >
             <AppearanceAvatar appearance={avatar} size="lg" className="glow-accent size-20 transition-transform group-hover:scale-[1.03]" />
           </button>
@@ -63,11 +66,13 @@ export function ScreenPerfil({
           <button
             type="button"
             onClick={onOpenGrinder}
-            className="flex items-center justify-between px-4 pt-5 pb-4 text-left transition-colors hover:bg-secondary/50"
+            disabled={pending}
+            aria-busy={pending}
+            className="flex items-center justify-between px-4 pt-5 pb-4 text-left transition-colors hover:bg-secondary/50 disabled:pointer-events-none disabled:opacity-60"
           >
             <span className="text-sm text-foreground">Molino</span>
             <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
-              {grinder}
+              {pending ? <Loader2 className="size-4 animate-spin text-primary" aria-label="Guardando molino" /> : grinder}
               <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </span>
           </button>
@@ -77,8 +82,10 @@ export function ScreenPerfil({
           <button
             type="button"
             onClick={() => onToggleUnit(tempUnit === "C" ? "F" : "C")}
+            disabled={pending}
+            aria-busy={pending}
             aria-label={`Temperatura en grados ${tempUnit === "C" ? "Celsius" : "Fahrenheit"}, pulsa para cambiar`}
-            className="flex w-full items-center justify-between px-4 pt-4 pb-5 text-left transition-colors hover:bg-secondary/50"
+            className="flex w-full items-center justify-between px-4 pt-4 pb-5 text-left transition-colors hover:bg-secondary/50 disabled:pointer-events-none disabled:opacity-60"
           >
             <span className="text-sm text-foreground">Temperatura</span>
             <div className="flex rounded-full bg-secondary p-0.5" aria-hidden="true">
@@ -95,6 +102,7 @@ export function ScreenPerfil({
                 </span>
               ))}
             </div>
+            {pending && <Loader2 className="size-4 animate-spin text-primary" aria-label="Guardando temperatura" />}
           </button>
         </div>
       </section>
@@ -115,7 +123,8 @@ export function ScreenPerfil({
           <button
             type="button"
             onClick={onOpenApiKey}
-            className="flex w-full items-center justify-between gap-3 rounded-3xl border border-border bg-card p-4 text-left transition-colors hover:bg-secondary/50"
+            disabled={pending}
+            className="flex w-full items-center justify-between gap-3 rounded-3xl border border-border bg-card p-4 text-left transition-colors hover:bg-secondary/50 disabled:pointer-events-none disabled:opacity-60"
           >
             <span className="flex min-w-0 items-center gap-3">
               <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-secondary text-primary">

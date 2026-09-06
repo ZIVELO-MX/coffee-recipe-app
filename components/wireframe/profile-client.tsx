@@ -100,6 +100,7 @@ export function ProfileClient({
         onOpenAvatar={() => { setAvatarError(""); setAvatarOpen(true) }}
         onToggleUnit={(temperature_unit) => persist({ ...preferences, temperature_unit })}
         apiKeyStatus={apiKeyStatus}
+        pending={pending}
         onOpenApiKey={() => setApiKeyOpen(true)}
         onLogout={() => void signOut({ redirectUrl: "/recipes" })}
       />

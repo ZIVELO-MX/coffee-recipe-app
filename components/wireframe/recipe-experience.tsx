@@ -38,7 +38,7 @@ export function RecipeExperience({ recipe, initialPreferences, timerStatus, scro
   const [grinderOpen, setGrinderOpen] = useState(false)
   const [fetchedGrind, setFetchedGrind] = useState<GrindSettingView | null>(null)
   const [message, setMessage] = useState("")
-  const [, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition()
   const recipeGrind = recipe.grind.converted?.grinder_id === preferences.default_grinder_id
     ? recipe.grind.converted
     : recipe.grind.source.grinder_id === preferences.default_grinder_id
@@ -167,6 +167,7 @@ export function RecipeExperience({ recipe, initialPreferences, timerStatus, scro
         tempUnit={preferences.temperature_unit}
         onToggleUnit={(temperature_unit) => savePreferences({ ...preferences, temperature_unit })}
         onOpenGrinder={() => setGrinderOpen(true)}
+        actionPending={isPending}
         saved={optimisticSaved}
         onToggleSaved={() => request({ recipeId: recipe._id, kind: "saved", value: !optimisticSaved })}
         liked={optimisticLike.liked}
